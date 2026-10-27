@@ -31,8 +31,6 @@ jobs:
           repository: F000NKKK/craftbook
           ref: ${{ env.CRAFTBOOK_REF }}
           path: .craftbook
-          # Needed while Craftbook is private: a fine-grained token that can read it.
-          token: ${{ secrets.CRAFTBOOK_TOKEN }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -65,8 +63,6 @@ jobs:
           repository: F000NKKK/craftbook
           ref: ${{ env.CRAFTBOOK_REF }}
           path: .craftbook
-          # Needed while Craftbook is private: a fine-grained token that can read it.
-          token: ${{ secrets.CRAFTBOOK_TOKEN }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: llvm-tools-preview
@@ -117,8 +113,6 @@ jobs:
           repository: F000NKKK/craftbook
           ref: ${{ env.CRAFTBOOK_REF }}
           path: .craftbook
-          # Needed while Craftbook is private: a fine-grained token that can read it.
-          token: ${{ secrets.CRAFTBOOK_TOKEN }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@v2
