@@ -81,7 +81,8 @@ are expected to grow.
 ## 4.3 Visibility
 
 - Default is private. Then `pub(super)`, `pub(crate)`, and `pub` only for
-  the crate's API (`clippy::redundant_pub_crate` keeps it tidy).
+  the crate's API. Crate-internal items are `pub(crate)`, never a bare `pub`
+  inside a private module (`unreachable_pub` enforces it).
 - Struct fields are private, except for plain data carriers with no
   invariant (DTOs at the interface layer, POD types sent to the GPU marked
   `#[repr(C)]`).
@@ -115,6 +116,7 @@ are expected to grow.
 - `unwrap()` is forbidden outside tests (`clippy::unwrap_used`).
 - `expect("…")` only on true invariants, with the invariant stated in the
   message: `.expect("pool index is in range: handle validated above")`.
+  This is a review rule: `expect` is not linted, its message is read.
 - `panic!`, `unreachable!`, `todo!`, `unimplemented!` are not used in
   production code paths; `todo!` never reaches the default branch.
 - Indexing (`v[i]`) is allowed where the index is proven in range by the
@@ -124,9 +126,10 @@ are expected to grow.
 
 ## 4.6 `unsafe`
 
-- `#![forbid(unsafe_code)]` in every crate except those whose job is
-  unsafe (drivers, FFI bindings, SIMD/GPU kernels), which say so in the crate
-  doc.
+- `unsafe_code` is denied by the workspace lint set. A crate whose job is
+  unsafe (driver, FFI binding, SIMD/GPU kernel) says so once, in `lib.rs`:
+  `#![expect(unsafe_code, reason = "wraps …")]`, and in its crate doc. This
+  is the only crate-level suppression the standard allows.
 - Each `unsafe` block is as small as possible and preceded by a
   `// SAFETY:` comment naming the invariant that makes it sound
   (`clippy::undocumented_unsafe_blocks`).
@@ -138,8 +141,10 @@ are expected to grow.
 
 - **No global mutable state.** No `static` `Mutex`/`RwLock`/`OnceLock`
   holding application state, no singleton "managers". State is owned by a
-  value that is passed in. Process-wide read-only data (`LazyLock` of a
-  constant table) is fine. The one allowed global is the process logger
+  value that is passed in. Process-wide read-only data is fine: a
+  `LazyLock<T>` or `OnceLock<T>` initialised once with a constant value of a
+  type that has no interior mutability (a lookup table, a parsed constant).
+  Atomics, locks and cells in a `static` are state, and are not. The one allowed global is the process logger
   (`tracing`/`log` dispatcher), installed once by the composition root;
   the project lists it in `craftbook.toml` `[[exempt]]`.
 - Shared ownership (`Arc`) is a decision, not a default. Prefer one owner and

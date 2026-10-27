@@ -171,14 +171,14 @@ Draft `craftbook.toml` (target state, to be committed with wave 0 so
 ```toml
 [[crate]]
 name = "meridian-gac"              # today: meridian-gac-core
-layer = "kernel"
+layer = "shared-kernel"
 context = "geometry"
-profile = "kernel"
+profile = "perf"
 [[crate]]
 name = "meridian-physics-domain"   # today: meridian-physics-core
 layer = "domain"
 context = "physics"
-profile = "kernel"
+profile = "perf"
 [[crate]]
 name = "meridian-runtime-app"      # today: meridian-engine-core
 layer = "app"
@@ -246,7 +246,7 @@ pipeline), `physics-core/generic.rs` (985 → `rigid_body`, `collider`,
 column, query), `gac-compute/fixed_wgsl.rs` (WGSL strings → `*_table.rs`).
 Fix the 29 long and 19 wide functions on the way (introduce `…Options` and
 value objects such as `DrawCall`, `BlurPass`). Add `proptest` for gac-core and
-numeric-core, `criterion` benches for every `profile = "kernel"` crate (§7.8 #4).
+numeric-core, `criterion` benches for every `profile = "perf"` crate (§7.8 #4).
 
 **Wave 4 — float/fixed layout (needs decision D5).** Turn
 `gac-core/{generic,float_ga,fixed_ga}.rs` (2237 prod lines, 30 public types)
@@ -288,7 +288,7 @@ until then `check-deps` enforces the old Meridian rule.
 | D5 | CLAUDE.md "Float/Fixed branching: always 3 files" — `lib.rs` may hold the shared/generic logic, flavours in `float.rs`/`fixed.rs`, one trio per *crate*. | §1.4 `lib.rs` is wiring only; §1.2 one primary item per file; §1.3 #4 one submodule per flavour *per concept*. `float_ga.rs` holds 7 public types, `generic.rs` 17. | Change CLAUDE.md: the trio becomes per concept directory (`rotor/{mod,float,fixed}.rs`), `mod.rs` wiring only, generic logic in item-named files; ban `generic.rs` as a file name. Keep the rule's "generic over `GaFlavor`, no duplication" half — it matches §2.5. |
 | D6 | ADR 008 / CLAUDE.md: `Motor3`/`Vec3`/`Bivector3`/`Rotor` duplicated as concrete `f32` for GPU dispatch. | §2.5 allows exactly this with the constraint in the item doc comment. | No conflict in substance; add the constraint to each item's `///`, and still split the files (D5). |
 | D7 | Rule 0 + ADR 003: `foundation` is open to all, and its process-wide log sink (`static SINK: OnceLock`, tokio file writer, panic hook) is declared "not a global manager". | §4.7 no global mutable state; §7.3 the shared kernel contains no I/O and no `async`. | ADR: a `Log` port in `meridian-diagnostics` (kernel), file sink and crash reporter as `meridian-diagnostics-fs`, sink passed in from the composition root. Same for `asset-core`'s global `CodecRegistry`. |
-| D8 | ADR 004 data-oriented ECS/physics: 246 `pub` fields, SoA, index access. | §7.8 allows it only with `profile = "kernel"`, a typed API at the edge and a justifying benchmark. | Declare gac/ecs/memory/physics kernels in `craftbook.toml` and `//!`; benchmarks are missing today, so the profile is provisional until wave 3 adds them. |
+| D8 | ADR 004 data-oriented ECS/physics: 246 `pub` fields, SoA, index access. | §7.8 allows it only with `profile = "perf"`, a typed API at the edge and a justifying benchmark. | Declare gac/ecs/memory/physics kernels in `craftbook.toml` and `//!`; benchmarks are missing today, so the profile is provisional until wave 3 adds them. |
 | D9 | Meridian is internally inconsistent: rule 12 says only graphics-driver and compute-driver may depend on gpu-driver, but the edge list allows gac-compute and physics-compute too; physics-core lists physics-driver but never uses it. | §5.4 docs are updated in the change that makes them wrong. | Fix in wave 0 independent of D1. |
 | D10 | `scripts/check_dependency_rules.py` `ALLOWED` dict is the source of truth for edges. | §7.3/§8.5: `craftbook.toml` + `craftcheck deps`. | One source only: generate `ALLOWED` from `craftbook.toml` during the transition, then delete the script. |
 | D11 | `AGENTS.md`, `CLAUDE.md`, `.claude/skills/*` and `.codex/skills/*` (8 skill sets each) restate architecture rules. | §5.4: agent guides link Craftbook and keep only project rules. | Rewrite in the same PRs as D1/D5, or agents keep enforcing the old direction. (CLAUDE.md "async only on genuine I/O" already matches §4.8; `audio-core::AudioOutput::open` is still async in a domain crate — fixed by D1.) |

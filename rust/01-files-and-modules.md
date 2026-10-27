@@ -13,7 +13,7 @@ type, the folder named after the namespace".
 | Lines in an inline `#[cfg(test)] mod tests { … }` | ≤ 150 | **150**, then `tests.rs` |
 | `lib.rs` / `mod.rs` of a module that has submodules | ≤ 60 | **100**, and no logic (§1.4) |
 | `.rs` files directly inside one module directory (not counting `mod.rs`, `tests.rs`) | ≤ 7 | **12**, then group into submodules |
-| Module depth below `src/` | ≤ 3 | **4** |
+| Module depth below `src/` (directories between `src/` and the file) | ≤ 3 | **4** |
 
 Lines are physical lines, including docs and blank lines: the reader scrolls
 through all of them. The only exemptions are files that say in their first
@@ -90,10 +90,12 @@ Once a module has submodules, its `lib.rs` / `mod.rs` contains only:
 1. the `//!` module documentation;
 2. `mod` declarations (with their `cfg` attributes);
 3. `pub use` re-exports that form the module's public surface;
-4. a crate-level `#![…]` attribute block (in `lib.rs`).
+4. `pub type` aliases of the module's surface (`pub type Result<T> = …`) and
+   `macro_rules!` exported by the module;
+5. a crate-level `#![…]` attribute block (in `lib.rs`).
 
-No `fn`, no `impl`, no `struct`/`enum`/`trait` definitions, no `const`
-values. It is the table of contents of the module, the analogue of a C#
+No `fn`, no `impl`, no `struct`/`enum`/`trait` definitions, no `const` or
+`static` values. It is the table of contents of the module, the analogue of a C#
 project file plus the namespace's public types.
 
 A crate small enough to be one file (≤ 250 lines) may keep its code in

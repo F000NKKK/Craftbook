@@ -158,7 +158,7 @@ Target file, replacing it wave by wave (inline tables, same structure as `[[crat
 
 ```toml
 crate = [
-  { name = "substrate-message",          layer = "kernel",    context = "kernel" },
+  { name = "substrate-message",          layer = "shared-kernel", context = "message" },
   { name = "substrate-workspace-domain", layer = "domain",    context = "workspace" },
   { name = "substrate-workspace-fs",     layer = "infra",     context = "workspace" },
   { name = "substrate-git-domain",       layer = "domain",    context = "source-control" },
@@ -188,15 +188,15 @@ context_edge = [
   { from = "source-control",   to = "host",      relation = "customer-supplier" },  # clean-env Command
   { from = "run",              to = "host",      relation = "customer-supplier" },
   { from = "terminal",         to = "host",      relation = "customer-supplier" },
-  { from = "host-ui-contract", to = "kernel",    relation = "published-language" }, # names the UI is generated from
-  { from = "workspace",        to = "kernel",    relation = "shared-kernel" },
-  { from = "source-control",   to = "kernel",    relation = "shared-kernel" },
-  { from = "search",           to = "kernel",    relation = "shared-kernel" },
-  { from = "run",              to = "kernel",    relation = "shared-kernel" },
-  { from = "terminal",         to = "kernel",    relation = "shared-kernel" },
-  { from = "project-model",    to = "kernel",    relation = "shared-kernel" },
-  { from = "ide-state",        to = "kernel",    relation = "shared-kernel" },
-  { from = "host",             to = "kernel",    relation = "shared-kernel" },
+  { from = "host-ui-contract", to = "message",   relation = "published-language" }, # names the UI is generated from
+  { from = "workspace",        to = "message",   relation = "shared-kernel" },
+  { from = "source-control",   to = "message",   relation = "shared-kernel" },
+  { from = "search",           to = "message",   relation = "shared-kernel" },
+  { from = "run",              to = "message",   relation = "shared-kernel" },
+  { from = "terminal",         to = "message",   relation = "shared-kernel" },
+  { from = "project-model",    to = "message",   relation = "shared-kernel" },
+  { from = "ide-state",        to = "message",   relation = "shared-kernel" },
+  { from = "host",             to = "message",   relation = "shared-kernel" },
 ]
 ```
 

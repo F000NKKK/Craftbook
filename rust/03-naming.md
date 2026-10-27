@@ -23,7 +23,7 @@ everything below is our stricter layer on top of it.
 | Lifetime | short lower-case word | `'a`, `'frame`, `'src` |
 | Feature flag | `kebab-case` | `fixed-point`, `hw-tests` |
 
-**Acronyms are words.** `GpuDevice`, `HttpClient`, `Ecs`, `Wgsl`,
+**Acronyms are words** (`clippy::upper_case_acronyms`, aggressive mode). `GpuDevice`, `HttpClient`, `Ecs`, `Wgsl`,
 `parse_json` — never `GPUDevice` or `parseJSON`. Two-letter acronyms too:
 `Io`, `Ui`, `Id`.
 
@@ -46,7 +46,10 @@ everything below is our stricter layer on top of it.
   `TFlavor` (Hungarian, C#-interface `I` prefix) are rejected.
 - **No stutter.** The path already says the module: `scene::Camera`, not
   `scene::SceneCamera`; `audio::streaming`, not `audio::audio_streaming`;
-  `git::status::read`, not `git::status::read_git_status`. (`clippy::module_name_repetitions`.)
+  `git::status::read`, not `git::status::read_git_status`. `craftcheck`
+  N201 catches file names that repeat their directory; type and function
+  names that repeat their module are a review finding (clippy's
+  `module_name_repetitions` only sees items under a `pub mod`).
 - **Units in names when the type does not carry them.** `timeout_ms`,
   `delay_secs`, `width_px`, `angle_rad`. Better: a newtype (`Seconds(f32)`,
   `Radians(f32)`) and no suffix ([chapter 4](04-types-and-errors.md)).

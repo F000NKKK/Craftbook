@@ -6,11 +6,12 @@
 |---|---|---|---|
 | Lines in a function body (code lines, without comments and blank lines) | ≤ 25 | **50** | `clippy::too_many_lines` |
 | Parameters, `self` included | ≤ 4 | **5** | `clippy::too_many_arguments` |
-| Nesting of blocks inside the body | ≤ 3 | **4** | `clippy::excessive_nesting` |
+| Nested blocks inside a method or test (free function: one more) | ≤ 2 | **3** | `clippy::excessive_nesting` (threshold 5: it counts the `impl`/`mod` and the body) |
 | Cognitive complexity | ≤ 10 | **15** | `clippy::cognitive_complexity` |
 | `bool` parameters | 0 | **0** for public functions, 1 for private | review, `clippy::fn_params_excessive_bools` |
 | Public methods in one inherent `impl` | ≤ 12 | **20** | review |
-| Fields in one struct | ≤ 7 | **10** | review, `clippy::struct_excessive_bools` |
+| Fields in one struct | ≤ 7 | **10** | review |
+| `bool` fields in one struct | ≤ 1 | **2** | `clippy::struct_excessive_bools` |
 
 The limits apply to tests too. A test that needs more than 50 lines is
 missing a fixture or a builder.

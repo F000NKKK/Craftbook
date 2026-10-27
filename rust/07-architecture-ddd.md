@@ -61,24 +61,28 @@ inner ones, never the reverse.
 | Layer | Contains | May depend on | Must not contain | Crate name suffix |
 |---|---|---|---|---|
 | **Shared kernel** | value types used by several contexts: math, ids, units, color | `std`, `core`, small pure crates (`serde` behind a feature) | I/O, `async`, domain rules of one context | none: `<product>-<concept>` |
-| **Domain** | entities, value objects, aggregates, domain services, domain events, port traits the domain needs | shared kernel | I/O, `async`, `tokio`, GPU/OS/file APIs, logging back ends, serialization formats | `-domain` |
-| **Application** | use cases (one per command), port traits for I/O, transactions, scheduling, cross-context orchestration | domain crates, shared kernel | business rules (they go into the domain), concrete technology | `-app` |
-| **Infrastructure** | adapters implementing ports: GPU, audio device, file system, process, `git` executable, persistence | the ports it implements (domain/app), the technology crate | business rules, decisions the domain should make | `-<technology>`: `-wgpu`, `-cpal`, `-gitcli`, `-fs` |
+| **Domain** | entities, value objects, aggregates, domain services, domain events, synchronous ports with no I/O (clock, id source, random) | shared kernel; another context's domain only as a listed customer–supplier or shared-kernel relation | I/O, `async`, `tokio`, GPU/OS/file APIs, logging back ends, serialization formats | `-domain` |
+| **Application** | use cases (one per command), port traits for I/O (repositories, devices, processes), transactions, scheduling, cross-context orchestration | domain crates, shared kernel; another context's app crate if the edge is listed | business rules (they go into the domain), concrete technology | `-app` |
+| **Infrastructure** | adapters implementing ports: GPU, audio device, file system, process, `git` executable, persistence | the ports it implements (domain/app), the technology crate; another adapter of the same context (a shared `-os` helper) | business rules, decisions the domain should make | `-<technology>`: `-wgpu`, `-cpal`, `-gitcli`, `-fs` |
 | **Interface** | composition root: wires adapters into use cases; CLI, Tauri commands, examples, binaries | everything above | business rules | `-cli`, `-tauri`, product name for the app |
 
 Rules:
 
-- **The domain owns its ports.** When a domain or use case needs something
-  from the outside world (a clock, a mesh upload, a process run), it declares
-  a trait in its own crate. The adapter crate depends on the domain and
-  implements the trait. The domain never depends on a driver.
+- **The inner layer owns its ports.** What the model needs from outside is
+  a trait declared by the layer that needs it: I/O ports (a mesh upload, a
+  repository, a process run, an audio sink) by the **application** crate, so
+  they may be `async` (chapter 4 §4.8); I/O-free ports (a clock, an id
+  source, a random source) by the **domain**, synchronous. The adapter crate
+  depends on that crate and implements the trait. Domain and application
+  never depend on a driver.
 - **Composition happens once,** in the interface layer (the composition
   root): the only place that names concrete adapters.
 - **No layer skipping** in the other direction: interface code calls use cases,
   not adapters directly, except for wiring them up.
 - **Cross-context calls go through the application layer** or through a
   published API of the upstream domain listed in the context map. A domain
-  crate depends on another domain crate only as customer–supplier, listed.
+  crate depends on another context's domain crate only through a listed
+  customer–supplier or shared-kernel relation.
 - Layers and allowed edges are declared in `craftbook.toml` and checked by
   `craftcheck deps` on every PR.
 
@@ -94,14 +98,23 @@ Immutable, compared by value, valid by construction.
 pub struct Mass(f32);
 
 impl Mass {
+    /// Creates a mass of `kilograms`.
+    ///
+    /// # Errors
+    ///
+    /// [`MassError::NotFinite`] for NaN or infinity,
+    /// [`MassError::NotPositive`] for zero or a negative value.
     pub fn new(kilograms: f32) -> Result<Self, MassError> {
-        if kilograms.is_finite() && kilograms > 0.0 {
-            Ok(Self(kilograms))
-        } else {
-            Err(MassError::NotPositive { kilograms })
+        if !kilograms.is_finite() {
+            return Err(MassError::NotFinite { kilograms });
         }
+        if kilograms <= 0.0 {
+            return Err(MassError::NotPositive { kilograms });
+        }
+        Ok(Self(kilograms))
     }
 
+    /// The mass in kilograms.
     #[must_use]
     pub fn kilograms(self) -> f32 {
         self.0
@@ -174,12 +187,19 @@ pub enum PhysicsEvent {
 
 ### Repository and other ports
 
-A trait in the domain or application crate describing what the model needs,
-in the model's words:
+A trait describing what the model needs, in the model's words; declared by
+the application crate when it does I/O (§7.3):
 
 ```rust
+/// Where meshes live once they are uploaded for drawing.
 pub trait MeshStore {
-    fn upload(&mut self, mesh: &MeshData) -> Result<MeshId, MeshStoreError>;
+    /// Uploads `mesh` and returns the id it is drawn by.
+    ///
+    /// # Errors
+    ///
+    /// [`MeshStoreError`] when the device refuses the upload.
+    fn upload(&mut self, mesh: &Mesh) -> Result<MeshId, MeshStoreError>;
+    /// Frees the mesh; unknown ids are ignored.
     fn release(&mut self, id: MeshId);
 }
 ```
@@ -241,8 +261,9 @@ structs with public fields, index-based access, free functions over slices.
 
 The conditions:
 
-1. The crate or module declares itself a kernel in its `//!` doc and in
-   `craftbook.toml` (`profile = "kernel"`).
+1. The crate declares itself a performance kernel in its `//!` doc and in
+   `craftbook.toml` (`profile = "perf"`, which turns off craftcheck C108 and
+   A502 for it).
 2. It is still placed in the correct layer, follows naming, file and
    function limits, and has its own tests and benchmarks.
 3. It exposes a typed, validated API to the rest of the domain (value objects

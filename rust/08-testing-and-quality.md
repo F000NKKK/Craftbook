@@ -13,15 +13,17 @@ per crate, and the threshold depends on the crate's layer (from
 | Application | ≥ 85 % | ≥ 80 % | ≥ 70 % |
 | Infrastructure (adapters) | ≥ 70 %, plus contract tests (§8.4) | — | — |
 | Interface (CLI, Tauri, examples) | smoke tests per entry point | — | — |
-| **New or changed lines in a PR** | **≥ 90 %** in kernel/domain/app crates | — | — |
+| **New or changed lines in a PR** | **≥ 90 %** in shared-kernel/domain/app crates | — | — |
 
 - Coverage is a floor, not the goal. A test that executes code without
   asserting its result does not count in review, and `cargo-mutants` exists
   to catch exactly that: a surviving mutant in domain code is a missing
   assertion.
-- Coverage is never raised by excluding code. `#[coverage(off)]` is allowed
-  only on code that cannot run in CI (hardware-only paths) and each use is
-  listed in the project's adoption page.
+- Coverage is never raised by excluding code. Code that cannot run in CI
+  (hardware-only paths) is excluded with
+  `#[cfg_attr(coverage_nightly, coverage(off))]` (the attribute is
+  nightly-only; `cargo llvm-cov` sets `coverage_nightly` on nightly), and each
+  use is listed in the project's adoption page.
 - Thresholds only go up. A project that is below them records its current
   numbers in its adoption page and must not lower them in any PR.
 
@@ -85,20 +87,24 @@ and use-case tests use fakes and assert on state, not on calls.
 
 ## 8.5 Quality gates in CI
 
-Every PR must pass, in this order (fast first):
+Every PR must pass these gates. [`templates/ci.yml`](../templates/ci.yml) is the
+reference implementation: the jobs run in parallel, fast checks first.
 
 1. `cargo fmt --all --check`
 2. `cargo clippy --workspace --all-targets --all-features -- -D warnings`
    with the workspace lint set ([chapter 6](06-tooling.md))
-3. `python3 craftcheck.py check .` — file, module and comment rules
-4. `python3 craftcheck.py deps .` — layer and context-map dependency rules
+3. `python3 <craftbook>/tools/craftcheck check .` — file, module, naming and comment rules
+4. `python3 <craftbook>/tools/craftcheck deps .` — layer and context-map dependency rules
 5. `cargo test --workspace --all-features` (and `cargo test --doc`)
-6. `cargo llvm-cov` with the per-layer thresholds
+6. `cargo llvm-cov` per crate with its layer's line and region thresholds,
+   and `diff-cover` on the PR's changed lines
 7. `cargo deny check` — licences, advisories, duplicate versions
 8. `cargo doc --no-deps` with `RUSTDOCFLAGS="-D warnings"`
 
-Nightly jobs: `cargo mutants` on kernel/domain/application crates, fuzzing,
-benchmarks, Miri on crates with `unsafe`.
+Nightly jobs: `cargo mutants` per shared-kernel/domain/application crate,
+scored by `tools/mutation_score.py` against the layer threshold (cargo-mutants
+itself fails on any missed mutant); Miri on crates with `unsafe`; fuzzing and
+benchmarks as project-specific jobs.
 
 A PR is merged only green. No gate is disabled to merge a PR; a gate that is
 wrong is fixed in Craftbook first.
@@ -109,7 +115,7 @@ A change is done when:
 
 - [ ] it follows chapters 1–7, and `craftcheck` reports nothing new;
 - [ ] tests for the new behaviour exist at the right level of the pyramid;
-- [ ] coverage of changed lines is ≥ 90 % (kernel/domain/app);
+- [ ] coverage of changed lines is ≥ 90 % (shared-kernel/domain/app);
 - [ ] public items are documented, the glossary and context map are current;
 - [ ] an ADR is written if the change makes an architectural decision;
 - [ ] all CI gates are green.
