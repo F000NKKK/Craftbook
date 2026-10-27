@@ -62,9 +62,13 @@ def _primary_item_rules(rel: str, items: list) -> list:
     if path.stem in ("main", "lib", "build", "tests") or "/tests/" in rel or "/benches/" in rel or "/examples/" in rel:
         return []
     primary = camel(path.parent.name if path.name == "mod.rs" else path.stem)
+    primaries = {primary}
+    if path.name != "mod.rs" and path.parent.name != "src":
+        # `parse/error.rs` may hold `ParseError`: the module path names it (ch. 1 §1.2).
+        primaries.add(camel(path.parent.name) + primary)
     out = []
     for t in items:
-        if t.public and t.kind in ("struct", "enum", "trait", "union") and t.name and not is_companion(t.name, primary):
+        if t.public and t.kind in ("struct", "enum", "trait", "union") and t.name and not any(is_companion(t.name, p) for p in primaries):
             out.append(Finding(rel, t.line, "C108", "warning", f"public type `{t.name}` is neither the file's primary `{primary}` nor a companion (`{primary}Error`, `{primary}Builder`, …): give it its own file", t.name))
     return out
 

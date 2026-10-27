@@ -36,6 +36,11 @@ Every file has exactly one **primary item**, and the file is named after it in
 | `decode_error.rs` | `pub enum DecodeError` |
 | `rotation.rs` | `pub trait Rotation` or a cohesive family of free functions about rotation |
 
+Inside a module directory the primary item may also carry the module's name,
+so `parse/error.rs` holds `ParseError` (read as `parse::ParseError` and
+re-exported as `ParseError`), not a bare `Error` that collides at every use
+site; `parse/parse_error.rs` would stutter (N201).
+
 The file may also hold **companions** of the primary item, and nothing else:
 
 - its error type, if only this item returns it;

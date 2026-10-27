@@ -136,6 +136,11 @@ class FileRulesTest(unittest.TestCase):
 
 
 class DirRulesTest(unittest.TestCase):
+    def test_primary_may_carry_its_module_name(self):
+        src = "//! d\npub enum ParseError {}\npub struct ParseErrorKind;\n"
+        self.assertNotIn("C108", codes(check_text(src, rel="c/src/parse/error.rs")))
+        self.assertIn("C108", codes(check_text("//! d\npub enum LexError {}\n", rel="c/src/parse/error.rs")))
+
     def test_directory_rules(self):
         files = [f"c/src/audio/audio_{i}.rs" for i in range(13)] + ["c/src/audio/utils.rs"]
         found = codes(file_rules.check_dir("c/src/audio", files, config.Limits(), 1))
