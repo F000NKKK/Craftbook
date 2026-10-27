@@ -250,10 +250,11 @@ once names and errors are right, so no crate is born with a wrong public API.
 
 - `craftcheck` on today's tree, with the single-crate map in
   [`substrate-platform/craftbook.toml`](substrate-platform/craftbook.toml):
-  `check` 30 errors, 41 warnings (C103 ×20 items in wiring files, C108 ×19,
-  E403 ×19, N202 ×5, E404 ×2 single-line signatures — the multi-line ones above
-  are found by review, A501 ×2, C102 ×1, C101 warnings ×3); `deps` 0, as
-  expected before the split. After wave 5 the target map above replaces it.
+  `check` 57 errors, 121 warnings (C108 ×77, C103 ×40 logic items in wiring
+  files, E403 ×29, C101 ×6 of which 1 over 400 counting both crates, S701 ×6,
+  N202 ×6, E404 ×5, A501 ×3, S702 ×2, C109 ×2, C102 ×1, D301 ×1); `deps` 0
+  errors and L607 (no `[workspace.lints]`), as expected before the split.
+  After wave 5 the target map above replaces it.
 - Pending exceptions (none granted yet): Tauri plugin crate name, `regex` in
   `substrate-search-domain`, no `ide-state` domain crate, `substrate-host-os`
   as a shared adapter. `#[coverage(off)]`: none used.

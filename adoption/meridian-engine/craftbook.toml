@@ -4,36 +4,36 @@
 
 [[crate]]
 name = "meridian-foundation"
-layer = "kernel"
+layer = "shared-kernel"
 context = "diagnostics"
 
 [[crate]]
 name = "meridian-numeric-core"
-layer = "kernel"
+layer = "shared-kernel"
 context = "geometry"
 
 [[crate]]
 name = "meridian-gac-core"
-layer = "kernel"
+layer = "shared-kernel"
 context = "geometry"
-profile = "kernel"
+profile = "perf"
 
 [[crate]]
 name = "meridian-memory-core"
-layer = "kernel"
+layer = "shared-kernel"
 context = "identity"
-profile = "kernel"
+profile = "perf"
 
 [[crate]]
 name = "meridian-resource-core"
-layer = "kernel"
+layer = "shared-kernel"
 context = "identity"
 
 [[crate]]
 name = "meridian-ecs-core"
-layer = "kernel"
+layer = "shared-kernel"
 context = "entity"
-profile = "kernel"
+profile = "perf"
 
 [[crate]]
 name = "meridian-task-core"
@@ -84,7 +84,7 @@ context = "rendering"
 name = "meridian-physics-core"
 layer = "domain"
 context = "physics"
-profile = "kernel"
+profile = "perf"
 
 [[crate]]
 name = "meridian-physics-driver"
@@ -113,7 +113,7 @@ context = "runtime"
 
 [[crate]]
 name = "meridian-dsl-core"
-layer = "kernel"
+layer = "shared-kernel"
 context = "scene-markup"
 
 [[crate]]

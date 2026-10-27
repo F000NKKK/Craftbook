@@ -297,12 +297,14 @@ until then `check-deps` enforces the old Meridian rule.
 [`meridian-engine/craftbook.toml`](meridian-engine/craftbook.toml) (each crate mapped to
 the layer it is meant to be in):
 
-- `craftcheck check`: 63 errors, 67 warnings — C101 ×16 (files over 400), C102 ×16
-  (test modules over 150), C103 ×28 (logic in wiring files), C108 ×22, D302 ×17,
-  D305 ×13, A501 ×1 (`CodecRegistry`), N201 ×1, N202 ×1. Type-level stutter is left to
-  `clippy::module_name_repetitions` (the 33 cases above).
-- `craftcheck deps`: 36 errors — L602 ×13 (domain/app crates depending on drivers and
-  compute adapters: conflict D1), L603 ×6 (platform used by drivers without a
-  context-map edge), L604 ×1, L605 ×32 (I/O or `async` in kernel/domain source).
+- `craftcheck check`: 130 errors, 137 warnings — C103 ×90 (logic items in wiring
+  files), C108 ×74 (extra public types per file), C101 ×28 (16 files over 400 lines,
+  12 over 250), D302 ×17, C102 ×16 (test modules over 150), D305 ×13, S702 ×11,
+  S701 ×7, N202 ×5, E403 ×3, A501 ×1 (`CodecRegistry`), N201 ×1, N203 ×1. Type-level
+  stutter is a review finding (the 33 cases above).
+- `craftcheck deps`: 26 errors, 1 warning — L602 ×13 (domain/app crates depending
+  on drivers and compute adapters: conflict D1), L603 ×7 (platform used by drivers
+  without a context-map edge), L605 ×5 (I/O or `async` in shared-kernel/domain
+  source), L604 ×1, L607 (no `[workspace.lints]`).
 
 Wave 0 commits this file as `craftbook.toml` and both outputs as baselines.
