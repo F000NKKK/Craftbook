@@ -20,6 +20,7 @@ from pathlib import Path
 
 import config as config_mod
 import deps_rules
+import readme_rules
 import report
 import workspace
 from checker import run_check
@@ -55,6 +56,7 @@ def main(argv: list) -> int:
         return 0
     if args.command == "check":
         files, findings = run_check(repo, cfg)
+        findings += readme_rules.check_readmes(repo, workspace.discover(repo))
         if args.journal:
             report.write_journal(args.journal, files, findings)
     else:

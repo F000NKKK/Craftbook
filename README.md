@@ -31,6 +31,7 @@ everyone.
 | [7. Architecture: DDD](rust/07-architecture-ddd.md) | ubiquitous language, bounded contexts, layers, entities, value objects, aggregates, ports |
 | [8. Testing and quality](rust/08-testing-and-quality.md) | coverage per layer, test pyramid, contract tests, CI gates, definition of done |
 | [9. Review checklist](rust/09-review-checklist.md) | what a reviewer checks by hand |
+| [10. READMEs](rust/10-readmes.md) | the product README (en + ru) and a README for every crate |
 
 ## Limits at a glance
 

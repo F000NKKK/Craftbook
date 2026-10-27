@@ -72,6 +72,8 @@ error that is not in the baseline.
 | E404 | `anyhow` in a public signature outside the interface layer | error |
 | A501 | global mutable state (`static mut`, `static` lock/cell/once) | error |
 | A502 | field-less struct used only as a namespace for functions | error |
+| R801 | crate without a `README.md` next to its `Cargo.toml` | warning |
+| R802 | crate README whose title is not the crate name | warning |
 | S701 | `format!` that builds an id or path (`"{a}:{b}"`, `"{a}/{b}"`) | warning |
 | S702 | `match` on string literals outside a parser (`FromStr`, `parse*`) | warning |
 | L601 | crate missing from the layer map | warning |

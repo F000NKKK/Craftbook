@@ -53,5 +53,7 @@ check is not repeated here. Each item links to its rule.
 
 - [ ] Public items have docs with `# Errors` / `# Panics` / examples as needed.
 - [ ] Comments explain why; no history, no commented-out code.
+- [ ] README (en and ru) and the crate's README changed with the code that made them wrong
+      ([chapter 10](10-readmes.md)).
 - [ ] Docs, glossary and context map changed in the same PR as the code
       that made them wrong.

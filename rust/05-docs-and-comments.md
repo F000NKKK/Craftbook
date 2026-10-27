@@ -53,7 +53,8 @@ Each project keeps, at minimum:
 
 | File | Content |
 |---|---|
-| `README.md` | what it is, how to build, how to run tests |
+| `README.md`, `README.ru.md` | the product README, shaped by [chapter 10](10-readmes.md) |
+| `crates/<name>/README.md` | one per crate ([chapter 10 §10.2](10-readmes.md#102-crate-readme-cratesnamereadmemd)) |
 | `AGENTS.md` / `CLAUDE.md` | link to Craftbook + only the project's own rules |
 | `docs/glossary.md` | the ubiquitous language, per bounded context ([§7.1](07-architecture-ddd.md#71-ubiquitous-language)) |
 | `docs/context-map.md` | the bounded contexts and how they relate ([§7.2](07-architecture-ddd.md#72-bounded-contexts-and-the-context-map)) |
