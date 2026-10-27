@@ -137,3 +137,19 @@ codes = ["A501"]
 | `criterion` | benchmarks of hot paths, nightly, > 5 % regression fails |
 
 A ready CI workflow is in [`templates/ci.yml`](../templates/ci.yml).
+
+## 6.5 Cargo.lock and dependency updates
+
+- A workspace that builds a binary, an application or a service commits its
+  `Cargo.lock`; CI runs cargo with `--locked`. Reason: without the lock, CI
+  resolves a new dependency version on every run, so a red build can come from
+  an upstream release and not from the change under test.
+- A workspace that only publishes libraries does not commit `Cargo.lock`
+  (consumers resolve their own); its CI job runs once a week without a lock to
+  catch breakage from new dependency versions early.
+- Updates arrive as pull requests, never as a silent re-resolve: enable
+  Dependabot (or a scheduled `cargo update` job that opens a PR) for every
+  committed lock, grouped by patch and minor, so CI tests each update before
+  it is merged.
+- A path or git dependency on a sibling product is pinned by the lock too;
+  bump it deliberately.
