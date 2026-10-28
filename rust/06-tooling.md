@@ -130,7 +130,7 @@ codes = ["A501"]
 |---|---|
 | `cargo llvm-cov` | per-layer coverage thresholds (chapter 8) |
 | `cargo mutants` + `tools/mutation_score.py` | mutation score per crate on shared-kernel/domain/app crates, nightly |
-| `cargo deny` with [`templates/deny.toml`](../templates/deny.toml) | licences, advisories, banned and duplicate crates |
+| `cargo deny` with [`templates/deny.toml`](../templates/deny.toml) | licences, advisories, banned and duplicate crates; the licence allow-list includes `OpenSSL` (owner decision, 2026-10-28: ring/rustls, permissive, GPL-incompatible but irrelevant for these products) |
 | `cargo doc` with `RUSTDOCFLAGS="-D warnings"` | broken intra-doc links |
 | `cargo +nightly miri test` | crates with `unsafe`, nightly |
 | `cargo fuzz` | decoders and parsers of untrusted input, nightly |

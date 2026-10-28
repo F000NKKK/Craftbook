@@ -21,6 +21,11 @@ allow = [
     "Unicode-DFS-2016",
     "CC0-1.0",
     "MPL-2.0",
+    # Allowed by the project owner (2026-10-28) for ring/rustls on older releases:
+    # permissive, but with a notice and advertising clause and GPL-incompatible,
+    # which does not matter for MIT/Apache/AGPL-only products. Newer ring
+    # releases are Apache-2.0/ISC; drop this line once nothing needs it.
+    "OpenSSL",
 ]
 confidence-threshold = 0.9
 
