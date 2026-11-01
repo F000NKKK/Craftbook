@@ -35,3 +35,7 @@ Document goals, failure modes and chosen profiles in the project policy. Run `ca
 ## Scope and limitations
 
 No standard can guarantee correctness, security, architecture quality or fit for *every* task. Craftbook instead supplies adaptable decisions and explicit verification; project-specific requirements take precedence when justified and documented.
+
+## Native Rust tooling (experimental)
+
+The new [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) validates v2 policy without Python. Install with `cargo install --path tools/cargo-craftcheck`, then run `cargo craftcheck check --config craftbook.toml`. Its current scope is **policy validation only**; source and dependency analysis remain future work. [CI workflow](.github/workflows/craftbook-v2.yml).
