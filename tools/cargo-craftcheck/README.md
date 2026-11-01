@@ -66,3 +66,9 @@ Diagnostic identifiers: `CB001` (invalid policy), `CB002` (forbidden workspace e
 ### Workspace discovery
 
 When recursive discovery finds the root `Cargo.toml` and member manifests of the same Cargo workspace, dependency rules are checked once per workspace root (identified using `cargo metadata --no-deps`). Distinct nested workspaces are checked separately. Errors in discovering a workspace are reported as `CB003` rather than silently skipped.
+
+## Rule provenance (v2-rc2 development)
+
+Dependency violations now point to the **source package's** `Cargo.toml`, not the workspace root, and include the active `CraftBook.toml` path and zero-based `rule_index`. The human-readable diagnostic also shows the corresponding one-based rule number. JSON includes `config_path` and `rule_index` when a matching policy rule exists. SARIF includes `properties.configPath` and `properties.ruleIndex` alongside the package manifest location. No source line number is inferred.
+
+Nested independent workspaces are discovered separately; multiple manifests belonging to one Cargo workspace share one dependency analysis. Explicit policy validation still descends into every nested `CraftBook.toml`.
