@@ -33,3 +33,8 @@ jobs:
       - name: Nested self-check (dependencies)
         working-directory: tools/cargo-craftcheck
         run: cargo run --quiet -- deps
+      - name: Craftbook self-check (effective configuration)
+        run: cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- config
+      - name: Nested self-check (explain inheritance)
+        working-directory: tools/cargo-craftcheck
+        run: cargo run --quiet -- explain
