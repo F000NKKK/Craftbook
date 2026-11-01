@@ -46,7 +46,13 @@ pub struct DependencyRule {
 /// Get the Cargo workspace root for a manifest, without resolving dependencies.
 pub fn workspace_root(manifest: &Path) -> Result<String, String> {
     let output = Command::new("cargo")
-        .args(["metadata", "--no-deps", "--format-version", "1", "--manifest-path"])
+        .args([
+            "metadata",
+            "--no-deps",
+            "--format-version",
+            "1",
+            "--manifest-path",
+        ])
         .arg(manifest)
         .output()
         .map_err(|error| error.to_string())?;
