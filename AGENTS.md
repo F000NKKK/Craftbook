@@ -1,16 +1,11 @@
-# AGENTS.md — Craftbook
+# Craftbook contributor guidance
 
-This repository is the engineering standard itself, not a code project.
+Craftbook is a Rust engineering handbook, not a DDD-only template.
 
-- The rules live in `rust/`; `README.md` holds the index and the limits table,
-  `README.ru.md` a Russian summary. A change to a number or a rule updates all
-  three in the same commit.
-- `tools/craftcheck` must stay in sync with `rust/06-tooling.md` (the rule
-  table) and with the rules it checks. Run its tests:
-  `python3 -m unittest discover -s tools/craftcheck/tests`.
-- `adoption/<project>.md` pages are measurements and migration plans. Every
-  number in them comes from a command; re-measure rather than edit numbers by
-  hand.
-- Write rules as instructions with a reason, not as descriptions of current
-  code. Keep chapters project-neutral: project names appear only as examples
-  and in `adoption/`.
+- Correctness, soundness and documented project contracts outrank stylistic preferences.
+- MUST / SHOULD / MAY / PROJECT are distinct. Do not turn a SHOULD into an unconditional CI failure.
+- Rust standard library and ecosystem idioms outrank patterns borrowed mechanically from C#.
+- Keep ten linked chapters, both README language versions, examples and migrations aligned.
+- DDD, ports/adapters, CQRS and layers are optional profiles. Never force these on kernels, games or simple libraries.
+- Changes to tooling must include tests and preserve an explainable migration path.
+- The Python legacy checker is not authoritative for the v2 handbook.
