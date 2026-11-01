@@ -59,6 +59,16 @@ fn inherited_dependency_policy_can_be_replaced_locally() {
     assert!(!sarif.status.success());
     let sarif_value: serde_json::Value = serde_json::from_slice(&sarif.stdout).unwrap();
     assert_eq!(sarif_value["runs"][0]["results"][0]["ruleId"], "CB002");
+    assert_eq!(sarif_value["runs"][0]["results"][0]["properties"]["ruleIndex"], 0);
+    assert!(sarif_value["runs"][0]["results"][0]["properties"]["configPath"]
+        .as_str()
+        .unwrap()
+        .ends_with("CraftBook.toml"));
+    assert!(sarif_value["runs"][0]["results"][0]["locations"][0]["physicalLocation"]
+        ["artifactLocation"]["uri"]
+        .as_str()
+        .unwrap()
+        .ends_with("alpha/Cargo.toml"));
     assert_eq!(
         sarif_value["runs"][0]["results"].as_array().unwrap().len(),
         1
