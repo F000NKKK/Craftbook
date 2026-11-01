@@ -108,23 +108,43 @@ fn table_entry_line(content: &str, header: &str, index: usize) -> Option<usize> 
 
 fn dependency_line(manifest: &Path, package: &str) -> Option<usize> {
     let content = std::fs::read_to_string(manifest).ok()?;
-    let mut in_dependencies = false;
+    let document: toml::Table = toml::from_str(&content).ok()?;
+    // Only claim a source position for an unambiguous key in a dependency table.
+    let mut candidates = Vec::new();
+    for section in ["dependencies", "dev-dependencies", "build-dependencies"] {
+        let Some(table) = document.get(section).and_then(toml::Value::as_table) else {
+            continue;
+        };
+        for (key, value) in table {
+            let actual = value
+                .as_table()
+                .and_then(|entry| entry.get("package"))
+                .and_then(toml::Value::as_str)
+                .unwrap_or(key);
+            if actual == package {
+                candidates.push((section, key.as_str()));
+            }
+        }
+    }
+    if candidates.len() != 1 {
+        return None;
+    }
+    let (section, key) = candidates[0];
+    let mut inside = false;
     for (index, line) in content.lines().enumerate() {
         let trimmed = line.trim();
         if trimmed.starts_with('[') {
-            in_dependencies = trimmed == "[dependencies]"
-                || trimmed == "[dev-dependencies]"
-                || trimmed == "[build-dependencies]"
-                || trimmed.ends_with(".dependencies]")
-                || trimmed.ends_with(".dev-dependencies]")
-                || trimmed.ends_with(".build-dependencies]");
-        } else if in_dependencies {
-            if let Some((key, _)) = trimmed.split_once('=') {
-                let key = key.trim().trim_matches('"').trim_matches('\'');
-                if key == package {
-                    return Some(index + 1);
-                }
-            }
+            inside = trimmed == format!("[{section}]");
+            continue;
+        }
+        if !inside {
+            continue;
+        }
+        let Some((name, _)) = trimmed.split_once('=') else {
+            continue;
+        };
+        if name.trim().trim_matches('"') == key {
+            return Some(index + 1);
         }
     }
     None
