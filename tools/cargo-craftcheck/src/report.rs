@@ -21,6 +21,10 @@ pub struct Diagnostic {
     pub end_column: Option<usize>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config_line: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config_end_line: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config_end_column: Option<usize>,
 }
 
 impl Diagnostic {
@@ -36,6 +40,8 @@ impl Diagnostic {
             end_line: None,
             end_column: None,
             config_line: None,
+            config_end_line: None,
+            config_end_column: None,
         }
     }
 
@@ -51,6 +57,20 @@ impl Diagnostic {
             self.column = Some(start.column);
             self.end_line = Some(end.line);
             self.end_column = Some(end.column);
+        }
+        self
+    }
+
+    pub fn with_end(mut self, line: usize, column: usize) -> Self {
+        self.end_line = Some(line);
+        self.end_column = Some(column);
+        self
+    }
+
+    pub fn with_rule_end(mut self, position: Option<(usize, usize)>) -> Self {
+        if let Some((line, column)) = position {
+            self.config_end_line = Some(line);
+            self.config_end_column = Some(column);
         }
         self
     }
@@ -150,12 +170,20 @@ pub fn render_with_root(
                         "properties": {
                             "configPath": item.config_path,
                             "ruleIndex": item.rule_index,
-                            "configLine": item.config_line
+                            "configLine": item.config_line,
+                            "configEndLine": item.config_end_line,
+                            "configEndColumn": item.config_end_column
                         },
                         "relatedLocations": item.config_path.as_ref().map(|config| {
                             vec![serde_json::json!({
                                 "id": 1,
-                                "physicalLocation": physical_location(config, root, item.config_line, 1, None)
+                                "physicalLocation": physical_location(
+                                    config,
+                                    root,
+                                    item.config_line,
+                                    1,
+                                    item.config_end_line.zip(item.config_end_column)
+                                )
                             })]
                         }).unwrap_or_default(),
                         "locations": [{"physicalLocation": physical_location(
