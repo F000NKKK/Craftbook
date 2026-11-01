@@ -314,7 +314,10 @@ fn isolated_nested_workspace_dependency_violation_is_reported() {
         &directory.join("nested/leaf/Cargo.toml"),
         "[package]\nname = 'leaf'\nversion = '0.1.0'\nedition = '2024'\n",
     );
-    write(&directory.join("nested/leaf/src/lib.rs"), "pub fn leaf() {}\n");
+    write(
+        &directory.join("nested/leaf/src/lib.rs"),
+        "pub fn leaf() {}\n",
+    );
     let output = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
         .args(["deps", "--format", "json"])
         .current_dir(&directory)
@@ -325,9 +328,11 @@ fn isolated_nested_workspace_dependency_violation_is_reported() {
     let diagnostics = report["diagnostics"].as_array().unwrap();
     assert_eq!(diagnostics.len(), 1);
     assert_eq!(diagnostics[0]["rule_id"], "CB002");
-    assert!(diagnostics[0]["config_path"]
-        .as_str()
-        .unwrap()
-        .ends_with("nested/CraftBook.toml"));
+    assert!(
+        diagnostics[0]["config_path"]
+            .as_str()
+            .unwrap()
+            .ends_with("nested/CraftBook.toml")
+    );
     fs::remove_dir_all(&directory).unwrap();
 }
