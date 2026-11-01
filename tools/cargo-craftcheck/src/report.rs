@@ -98,7 +98,11 @@ mod tests {
 
     #[test]
     fn sarif_includes_rule_and_location() {
-        let findings = [Diagnostic::new("CB002", "forbidden edge", Path::new("Cargo.toml"))];
+        let findings = [Diagnostic::new(
+            "CB002",
+            "forbidden edge",
+            Path::new("Cargo.toml"),
+        )];
         let result = render(Format::Sarif, &findings).unwrap();
         let value: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(value["version"], "2.1.0");
