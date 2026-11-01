@@ -107,6 +107,7 @@ fn dependency_position(manifest: &Path, package: &str) -> Option<((usize, usize)
     })
 }
 
+#[cfg(test)]
 fn dependency_line(manifest: &Path, package: &str) -> Option<usize> {
     dependency_position(manifest, package).map(|(start, _)| start.0)
 }
