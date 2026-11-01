@@ -207,6 +207,18 @@ fn invalid_nested_toml_produces_structured_diagnostic() {
             .unwrap()
             .ends_with("nested/CraftBook.toml")
     );
+    let sarif = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
+        .args(["check", "--format", "sarif"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!sarif.status.success());
+    let report: serde_json::Value = serde_json::from_slice(&sarif.stdout).unwrap();
+    let region = &report["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"];
+    assert_eq!(region["startLine"], 1);
+    assert!(region["startColumn"].as_u64().is_some());
+    assert!(region["endLine"].as_u64().is_some());
+    assert!(region["endColumn"].as_u64().is_some());
     fs::remove_dir_all(&directory).unwrap();
 }
 
