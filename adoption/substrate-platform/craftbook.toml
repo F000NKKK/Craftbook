@@ -1,8 +1,0 @@
-[[crate]]
-name = "substrate-platform"
-layer = "infra"      # really mixed: shared-kernel + domain + app + infra + interface (commands, events)
-context = "substrate"
-[[crate]]
-name = "tauri-plugin-substrate"
-layer = "interface"
-context = "substrate"
