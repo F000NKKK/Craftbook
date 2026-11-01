@@ -8,6 +8,7 @@ use std::path::Path;
 use serde::Deserialize;
 
 pub mod deps;
+pub mod scopes;
 
 const PROFILES: &[&str] = &[
     "simple",
