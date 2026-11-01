@@ -434,5 +434,4 @@ mod tests {
         assert_eq!(dependency_line(&path, "actual"), None);
         std::fs::remove_file(path).unwrap();
     }
-
 }

@@ -163,10 +163,9 @@ fn run() -> Result<(), String> {
                             violation.rule_index + 1,
                             violation.config.display()
                         );
-                        let mut diagnostic =
-                            Diagnostic::new("CB002", message, &violation.manifest)
-                                .with_rule(&violation.config, violation.rule_index)
-                                .with_rule_line(violation.config_line);
+                        let mut diagnostic = Diagnostic::new("CB002", message, &violation.manifest)
+                            .with_rule(&violation.config, violation.rule_index)
+                            .with_rule_line(violation.config_line);
                         if let Some(line) = violation.manifest_line {
                             diagnostic = diagnostic.at(line, 1);
                         }

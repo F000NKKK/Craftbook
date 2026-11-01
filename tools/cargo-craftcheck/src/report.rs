@@ -76,7 +76,12 @@ fn sarif_uri(path: &str, root: &Path) -> String {
     relative.to_string_lossy().replace('\\', "/")
 }
 
-fn physical_location(path: &str, root: &Path, line: Option<usize>, column: usize) -> serde_json::Value {
+fn physical_location(
+    path: &str,
+    root: &Path,
+    line: Option<usize>,
+    column: usize,
+) -> serde_json::Value {
     let mut location = serde_json::json!({
         "artifactLocation": {"uri": sarif_uri(path, root)}
     });
@@ -208,11 +213,14 @@ mod tests {
     }
     #[test]
     fn unknown_locations_have_no_sarif_region() {
-        let finding = Diagnostic::new("CB003", "workspace inspection failed", Path::new("Cargo.toml"));
+        let finding = Diagnostic::new(
+            "CB003",
+            "workspace inspection failed",
+            Path::new("Cargo.toml"),
+        );
         let output = render(Format::Sarif, &[finding]).unwrap();
         let value: serde_json::Value = serde_json::from_str(&output).unwrap();
         let location = &value["runs"][0]["results"][0]["locations"][0]["physicalLocation"];
         assert!(location.get("region").is_none());
     }
-
 }
