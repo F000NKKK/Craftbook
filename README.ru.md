@@ -131,3 +131,5 @@ Craftbook — инженерный справочник, а не формаль�
 Нативная утилита также поддерживает экспериментальную проверку явно запрещённых прямых зависимостей между пакетами workspace: `cargo craftcheck deps --config CraftBook.toml --manifest-path Cargo.toml`. Используется Cargo Metadata; слои DDD автоматически не навязываются.
 
 Файлы `CraftBook.toml` можно размещать во вложенных папках: локальные настройки переопределяют родительские. Команды `cargo craftcheck check` и `cargo craftcheck deps` запускаются из любой настроенной директории и проверяют её поддерево. [Подробнее](tools/cargo-craftcheck/README.md#hierarchical-configuration).
+
+Посмотреть объединённую политику можно командой `cargo craftcheck config`, а источники наследования — `cargo craftcheck explain`. Эти команды работают с текущим каталогом, не обходя соседние проекты.
