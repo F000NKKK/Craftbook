@@ -5,7 +5,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use cargo_craftcheck::report::{Diagnostic, Format, render};
+use cargo_craftcheck::report::{Diagnostic, Format, render_with_root};
 
 fn usage() {
     println!(
@@ -173,7 +173,8 @@ fn run() -> Result<(), String> {
             }
         }
     }
-    let output = render(format, &diagnostics)?;
+    let root_absolute = std::fs::canonicalize(root).map_err(|error| error.to_string())?;
+    let output = render_with_root(format, &diagnostics, &root_absolute)?;
     if format == Format::Text {
         if diagnostics.is_empty() {
             println!("Craftbook checks passed");
