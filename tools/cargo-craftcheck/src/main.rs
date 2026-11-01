@@ -4,28 +4,35 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+use cargo_craftcheck::report::{Diagnostic, Format, render};
+
 fn usage() {
     println!(
-        "Usage: cargo craftcheck [check|deps|config|explain] [--config CraftBook.toml] [--manifest-path Cargo.toml]"
+        "Usage: cargo craftcheck [check|deps|config|explain] [--config CraftBook.toml] [--manifest-path Cargo.toml] [--format text|json|sarif]"
     );
 }
 
-fn check_policy_tree(root: &Path) -> Result<(), String> {
+fn check_policy_tree(root: &Path, verbose: bool) -> Result<Vec<Diagnostic>, String> {
+    let mut findings = Vec::new();
     let configs = cargo_craftcheck::scopes::discover(root, "CraftBook.toml")?;
     for path in configs {
         let dir = path.parent().ok_or("invalid configuration path")?;
         let merged = cargo_craftcheck::scopes::effective(dir)?
             .ok_or_else(|| format!("no effective policy for {}", path.display()))?;
-        let policy: cargo_craftcheck::Policy = merged
-            .try_into()
-            .map_err(|e| format!("{}: {e}", path.display()))?;
-        let findings = cargo_craftcheck::validate(&policy);
-        if !findings.is_empty() {
-            return Err(format!("{}: {}", path.display(), findings.join("; ")));
+        match merged.try_into() {
+            Ok(policy) => {
+                let policy: cargo_craftcheck::Policy = policy;
+                for message in cargo_craftcheck::validate(&policy) {
+                    findings.push(Diagnostic::new("CB001", message, &path));
+                }
+            }
+            Err(error) => findings.push(Diagnostic::new("CB001", format!("{error}"), &path)),
         }
-        println!("Policy valid: {}", path.display());
+        if verbose {
+            println!("Policy checked: {}", path.display());
+        }
     }
-    Ok(())
+    Ok(findings)
 }
 
 fn run() -> Result<(), String> {
@@ -56,12 +63,17 @@ fn run() -> Result<(), String> {
 
     let mut config: Option<PathBuf> = None;
     let mut manifest: Option<PathBuf> = None;
+    let mut format = Format::Text;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--config" => {
                 config = Some(PathBuf::from(
                     args.next().ok_or("--config requires a path")?,
                 ));
+            }
+            "--format" => {
+                let value = args.next().ok_or("--format requires a value")?;
+                format = Format::parse(&value)?;
             }
             "--manifest-path" => {
                 manifest = Some(PathBuf::from(
@@ -115,7 +127,10 @@ fn run() -> Result<(), String> {
         println!("{merged}");
         return Ok(());
     }
-    check_policy_tree(root)?;
+    if (command == "config" || command == "explain") && format != Format::Text {
+        return Err("--format is supported only for check and deps".into());
+    }
+    let mut diagnostics = check_policy_tree(root, format == Format::Text)?;
 
     if command == "deps" {
         let manifests = match manifest {
@@ -125,20 +140,32 @@ fn run() -> Result<(), String> {
         if manifests.is_empty() {
             return Err(format!("no Cargo.toml found below {}", root.display()));
         }
-        let mut findings = Vec::new();
         for path in manifests {
-            let errors = cargo_craftcheck::deps::check_workspace_scoped(&path)
-                .map_err(|e| format!("{}: {e}", path.display()))?;
-            findings.extend(errors);
+            match cargo_craftcheck::deps::check_workspace_scoped(&path) {
+                Ok(errors) => {
+                    for message in errors {
+                        diagnostics.push(Diagnostic::new("CB002", message, &path));
+                    }
+                }
+                Err(error) => diagnostics.push(Diagnostic::new("CB003", error, &path)),
+            }
         }
-        findings.sort();
-        findings.dedup();
-        if !findings.is_empty() {
-            return Err(findings.join("\n"));
-        }
-        println!("Workspace dependency rules passed");
     }
-    Ok(())
+    let output = render(format, &diagnostics)?;
+    if format == Format::Text {
+        if diagnostics.is_empty() {
+            println!("Craftbook checks passed");
+        } else {
+            eprintln!("{output}");
+        }
+    } else {
+        println!("{output}");
+    }
+    if diagnostics.is_empty() {
+        Ok(())
+    } else {
+        Err(format!("{} violation(s)", diagnostics.len()))
+    }
 }
 
 fn main() -> ExitCode {
