@@ -25,3 +25,5 @@ The experimental [`cargo-craftcheck`](../tools/cargo-craftcheck/README.md) imple
 ### Hierarchical `CraftBook.toml`
 
 The native CLI finds the nearest ancestor configuration and scans down the selected directory tree. Subdirectories can contain their own `CraftBook.toml`; TOML tables merge, while scalars and lists override their inherited counterparts. Run `cargo craftcheck check` or `cargo craftcheck deps` without explicit file arguments. See the [native tool README](../tools/cargo-craftcheck/README.md).
+
+Policy inspection: `cargo craftcheck config` prints the effective configuration for the working directory, and `cargo craftcheck explain` lists inherited policy sources from global to local. These commands inspect one directory rather than recursively checking a workspace.
