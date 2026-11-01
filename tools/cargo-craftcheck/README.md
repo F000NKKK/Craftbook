@@ -62,3 +62,7 @@ cargo craftcheck deps --format sarif
 ```
 
 Diagnostic identifiers: `CB001` (invalid policy), `CB002` (forbidden workspace edge), `CB003` (Cargo inspection failure). These formats currently report file locations, not source line positions. They do not imply Rust AST analysis.
+
+### Workspace discovery
+
+When recursive discovery finds the root `Cargo.toml` and member manifests of the same Cargo workspace, dependency rules are checked once per workspace root (identified using `cargo metadata --no-deps`). Distinct nested workspaces are checked separately. Errors in discovering a workspace are reported as `CB003` rather than silently skipped.
