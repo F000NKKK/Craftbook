@@ -4,7 +4,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use cargo_craftcheck::report::{render, Diagnostic, Format};
+use cargo_craftcheck::report::{Diagnostic, Format, render};
 
 fn usage() {
     println!(
