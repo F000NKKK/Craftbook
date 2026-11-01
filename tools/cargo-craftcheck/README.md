@@ -72,3 +72,7 @@ When recursive discovery finds the root `Cargo.toml` and member manifests of the
 Dependency violations now point to the **source package's** `Cargo.toml`, not the workspace root, and include the active `CraftBook.toml` path and zero-based `rule_index`. The human-readable diagnostic also shows the corresponding one-based rule number. JSON includes `config_path` and `rule_index` when a matching policy rule exists. SARIF includes `properties.configPath` and `properties.ruleIndex` alongside the package manifest location. No source line number is inferred.
 
 Nested independent workspaces are discovered separately; multiple manifests belonging to one Cargo workspace share one dependency analysis. Explicit policy validation still descends into every nested `CraftBook.toml`.
+
+### SARIF artifact paths (v2-rc2)
+
+SARIF `artifactLocation.uri` is emitted relative to the selected `CraftBook.toml` project root when the file is inside that tree. Absolute or externally located artifacts retain their original paths. The `configPath` property preserves the configuration provenance and `ruleIndex` identifies the zero-based rule entry. This does not imply a source-code line location or an automatic upload to GitHub Code Scanning.
