@@ -410,4 +410,29 @@ mod tests {
             .is_err()
         );
     }
+    #[test]
+    fn source_line_detection_handles_aliases_and_ambiguity() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        static NEXT: AtomicUsize = AtomicUsize::new(0);
+        let path = std::env::temp_dir().join(format!(
+            "craftbook-dependency-lines-{}-{}.toml",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        std::fs::write(
+            &path,
+            "[package]\nname='fixture'\nversion='0.1.0'\n[dependencies]\nrenamed = { package='actual', version='1' }\n",
+        )
+        .unwrap();
+        assert_eq!(dependency_line(&path, "actual"), Some(5));
+        assert_eq!(dependency_line(&path, "renamed"), None);
+        std::fs::write(
+            &path,
+            "[dependencies]\nactual='1'\n[dev-dependencies]\nactual='1'\n",
+        )
+        .unwrap();
+        assert_eq!(dependency_line(&path, "actual"), None);
+        std::fs::remove_file(path).unwrap();
+    }
+
 }
