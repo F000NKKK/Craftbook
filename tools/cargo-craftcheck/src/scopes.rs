@@ -6,7 +6,10 @@ const SKIP: &[&str] = &[".git", "target", "node_modules", ".idea", ".venv"];
 
 /// Find the closest configuration in the current directory or an ancestor.
 pub fn nearest(start: &Path) -> Option<PathBuf> {
-    start.ancestors().map(|dir| dir.join("CraftBook.toml")).find(|p| p.is_file())
+    start
+        .ancestors()
+        .map(|dir| dir.join("CraftBook.toml"))
+        .find(|p| p.is_file())
 }
 
 /// Merge tables recursively; the child wins for scalars and replaces arrays.
@@ -35,9 +38,9 @@ pub fn effective(dir: &Path) -> Result<Option<toml::Value>, String> {
         if !path.is_file() {
             continue;
         }
-        let raw = fs::read_to_string(&path)
-            .map_err(|e| format!("{}: {e}", path.display()))?;
-        let value = raw.parse::<toml::Value>()
+        let raw = fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+        let value = raw
+            .parse::<toml::Value>()
             .map_err(|e| format!("{}: {e}", path.display()))?;
         if !value.is_table() {
             return Err(format!("{}: expected a TOML table", path.display()));
@@ -92,7 +95,8 @@ mod tests {
         static SERIAL: AtomicUsize = AtomicUsize::new(0);
         let sequence = SERIAL.fetch_add(1, Ordering::Relaxed);
         let root = std::env::temp_dir().join(format!(
-            "craftbook-scopes-{}-{sequence}", std::process::id()
+            "craftbook-scopes-{}-{sequence}",
+            std::process::id()
         ));
         let nested = root.join("subsystem");
         fs::create_dir_all(&nested).unwrap();
