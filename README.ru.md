@@ -68,7 +68,7 @@
 
 ## 🚀 Быстрый старт
 
-Изучи [принципы](#-принципы), выбери подходящий [архитектурный профиль](rust/07-architecture-ddd.md) и используй [пример политики](templates/craftbook.toml). Следовать руководству можно без установки дополнительных инструментов.
+Изучи [принципы](#-принципы), выбери подходящий [архитектурный профиль](rust/07-architecture-ddd.md) и используй [пример политики](templates/CraftBook.toml). Следовать руководству можно без установки дополнительных инструментов.
 
 Для экспериментальной нативной проверки политики:
 
@@ -76,7 +76,7 @@
 git clone https://github.com/F000NKKK/Craftbook.git
 cd Craftbook
 cargo install --path tools/cargo-craftcheck
-cargo craftcheck check --config templates/craftbook.toml
+cargo craftcheck check --config templates/CraftBook.toml
 ```
 
 Утилита проверяет **конфигурацию политики** и явно заданные запреты прямых зависимостей Cargo Workspace; архитектуру исходного Rust-кода пока не анализирует.
@@ -96,7 +96,7 @@ cargo clippy --all-targets --manifest-path tools/cargo-craftcheck/Cargo.toml -- 
 cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
 ```
 
-Конфигурации: [политика проекта](templates/craftbook.toml) · [правила workspace](templates/workspace-lints.toml) · [Clippy](templates/clippy.toml) · [rustfmt](templates/rustfmt.toml) · [шаблон CI](templates/ci.yml).
+Конфигурации: [политика проекта](templates/CraftBook.toml) · [правила workspace](templates/workspace-lints.toml) · [Clippy](templates/clippy.toml) · [rustfmt](templates/rustfmt.toml) · [шаблон CI](templates/ci.yml).
 
 ## 🏗️ Архитектура
 
@@ -129,4 +129,6 @@ Craftbook — инженерный справочник, а не формаль�
 
 </div>
 
-Нативная утилита также поддерживает экспериментальную проверку явно запрещённых прямых зависимостей между пакетами workspace: `cargo craftcheck deps --config craftbook.toml --manifest-path Cargo.toml`. Используется Cargo Metadata; слои DDD автоматически не навязываются.
+Нативная утилита также поддерживает экспериментальную проверку явно запрещённых прямых зависимостей между пакетами workspace: `cargo craftcheck deps --config CraftBook.toml --manifest-path Cargo.toml`. Используется Cargo Metadata; слои DDD автоматически не навязываются.
+
+Файлы `CraftBook.toml` можно размещать во вложенных папках: локальные настройки переопределяют родительские. Команды `cargo craftcheck check` и `cargo craftcheck deps` запускаются из любой настроенной директории и проверяют её поддерево. [Подробнее](tools/cargo-craftcheck/README.md#hierarchical-configuration).
