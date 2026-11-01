@@ -18,8 +18,17 @@ fn check_policy_tree(root: &Path, verbose: bool) -> Result<Vec<Diagnostic>, Stri
     let configs = cargo_craftcheck::scopes::discover(root, "CraftBook.toml")?;
     for path in configs {
         let dir = path.parent().ok_or("invalid configuration path")?;
-        let merged = cargo_craftcheck::scopes::effective(dir)?
-            .ok_or_else(|| format!("no effective policy for {}", path.display()))?;
+        let merged = match cargo_craftcheck::scopes::effective(dir) {
+            Ok(Some(merged)) => merged,
+            Ok(None) => {
+                findings.push(Diagnostic::new("CB001", "missing effective policy", &path));
+                continue;
+            }
+            Err(error) => {
+                findings.push(Diagnostic::new("CB001", error, &path));
+                continue;
+            }
+        };
         match merged.try_into() {
             Ok(policy) => {
                 let policy: cargo_craftcheck::Policy = policy;
