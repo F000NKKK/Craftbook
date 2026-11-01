@@ -32,12 +32,18 @@ fn inherited_dependency_policy_can_be_replaced_locally() {
         &directory.join("alpha/Cargo.toml"),
         "[package]\nname = 'alpha'\nversion = '0.1.0'\nedition = '2024'\n[dependencies]\nbeta = { path = '../beta' }\n",
     );
-    write(&directory.join("alpha/src/lib.rs"), "pub fn value() -> u8 { beta::value() }\n");
+    write(
+        &directory.join("alpha/src/lib.rs"),
+        "pub fn value() -> u8 { beta::value() }\n",
+    );
     write(
         &directory.join("beta/Cargo.toml"),
         "[package]\nname = 'beta'\nversion = '0.1.0'\nedition = '2024'\n",
     );
-    write(&directory.join("beta/src/lib.rs"), "pub fn value() -> u8 { 1 }\n");
+    write(
+        &directory.join("beta/src/lib.rs"),
+        "pub fn value() -> u8 { 1 }\n",
+    );
 
     let executable = env!("CARGO_BIN_EXE_cargo-craftcheck");
     let run = |args: &[&str]| {
