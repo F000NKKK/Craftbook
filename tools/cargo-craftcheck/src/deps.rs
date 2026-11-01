@@ -464,6 +464,18 @@ mod tests {
         )
         .unwrap();
         assert_eq!(dependency_line(&path, "actual"), None);
+        std::fs::write(
+            &path,
+            "[target.'cfg(unix)'.dependencies]\nrenamed = { package='actual', version='1' }\n",
+        )
+        .unwrap();
+        assert_eq!(dependency_line(&path, "actual"), Some(2));
+        std::fs::write(
+            &path,
+            "[dependencies]\nactual='1'\n[target.'cfg(unix)'.dependencies]\nactual='1'\n",
+        )
+        .unwrap();
+        assert_eq!(dependency_line(&path, "actual"), None);
         std::fs::remove_file(path).unwrap();
     }
 }
