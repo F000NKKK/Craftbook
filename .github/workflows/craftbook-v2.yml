@@ -20,4 +20,4 @@ jobs:
       - run: cargo fmt --all --check --manifest-path tools/cargo-craftcheck/Cargo.toml
       - run: cargo clippy --all-targets --manifest-path tools/cargo-craftcheck/Cargo.toml -- -D warnings
       - run: cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
-      - run: cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- check --config templates/craftbook.toml
+      - run: cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- check --config templates/CraftBook.toml
