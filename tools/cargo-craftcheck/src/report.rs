@@ -15,6 +15,8 @@ pub struct Diagnostic {
     pub line: Option<usize>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub column: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config_line: Option<usize>,
 }
 
 impl Diagnostic {
@@ -27,12 +29,18 @@ impl Diagnostic {
             rule_index: None,
             line: None,
             column: None,
+            config_line: None,
         }
     }
 
     pub fn at(mut self, line: usize, column: usize) -> Self {
         self.line = Some(line);
         self.column = Some(column);
+        self
+    }
+
+    pub fn with_rule_line(mut self, line: Option<usize>) -> Self {
+        self.config_line = line;
         self
     }
 
@@ -101,8 +109,21 @@ pub fn render_with_root(
                         "message": {"text": item.message},
                         "properties": {
                             "configPath": item.config_path,
-                            "ruleIndex": item.rule_index
+                            "ruleIndex": item.rule_index,
+                            "configLine": item.config_line
                         },
+                        "relatedLocations": item.config_path.as_ref().map(|config| {
+                            vec![serde_json::json!({
+                                "id": 1,
+                                "physicalLocation": {
+                                    "artifactLocation": {"uri": sarif_uri(config, root)},
+                                    "region": item.config_line.map(|line| serde_json::json!({
+                                        "startLine": line,
+                                        "startColumn": 1
+                                    }))
+                                }
+                            })]
+                        }).unwrap_or_default(),
                         "locations": [{"physicalLocation": {
                             "artifactLocation": {"uri": sarif_uri(&item.path, root)},
                             "region": item.line.map(|line| serde_json::json!({
