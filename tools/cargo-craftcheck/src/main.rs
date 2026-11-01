@@ -4,7 +4,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use cargo_craftcheck::report::{Diagnostic, Format, render};
+use cargo_craftcheck::report::{render, Diagnostic, Format};
 
 fn usage() {
     println!(
@@ -101,6 +101,9 @@ fn run() -> Result<(), String> {
         return Err("--config must point to a CraftBook.toml file".into());
     }
     let root = root_config.parent().ok_or("invalid --config path")?;
+    if (command == "config" || command == "explain") && format != Format::Text {
+        return Err("--format is supported only for check and deps".into());
+    }
     if command == "config" || command == "explain" {
         let target = if cwd.starts_with(root) {
             cwd.as_path()
@@ -126,9 +129,6 @@ fn run() -> Result<(), String> {
         }
         println!("{merged}");
         return Ok(());
-    }
-    if (command == "config" || command == "explain") && format != Format::Text {
-        return Err("--format is supported only for check and deps".into());
     }
     let mut diagnostics = check_policy_tree(root, format == Format::Text)?;
 
