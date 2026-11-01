@@ -63,9 +63,9 @@ disallow = "infrastructure"
 | `CB002` | Forbidden direct workspace dependency |
 | `CB003` | Cargo workspace inspection failed |
 
-For `CB002`, JSON includes the package manifest path, `config_path` and zero-based `rule_index`. When source positions can be determined, it also includes one-based `line`, `column`, and `config_line`. SARIF supplies a primary location in the package's `Cargo.toml`, a related location in the governing `CraftBook.toml`, and `properties.configPath` / `properties.ruleIndex`.
+For `CB002`, JSON includes the package manifest path, `config_path` and zero-based `rule_index`. When source positions can be determined, including uniquely declared renamed packages and target-specific dependencies, it also includes one-based `line`, `column`, and `config_line`. SARIF supplies a primary location in the package's `Cargo.toml`, a related location in the governing `CraftBook.toml`, and `properties.configPath` / `properties.ruleIndex`.
 
-SARIF file URIs are relative to the selected project root where possible. Locations without a reliable source position omit the `region` field rather than reporting a guessed position. No upload to GitHub Code Scanning is performed by the checker itself.
+SARIF file URIs are relative to the selected project root where possible. Locations with ambiguous declarations, including multiple target-specific entries for the same package, omit the `region` field rather than reporting a guessed position. Invalid nested TOML also produces a structured `CB001` diagnostic in JSON/SARIF. No upload to GitHub Code Scanning is performed by the checker itself.
 
 ## Scope and limitations
 
