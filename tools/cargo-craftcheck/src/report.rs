@@ -16,6 +16,10 @@ pub struct Diagnostic {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub column: Option<usize>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub end_line: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub end_column: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub config_line: Option<usize>,
 }
 
@@ -29,6 +33,8 @@ impl Diagnostic {
             rule_index: None,
             line: None,
             column: None,
+            end_line: None,
+            end_column: None,
             config_line: None,
         }
     }
@@ -36,6 +42,16 @@ impl Diagnostic {
     pub fn at(mut self, line: usize, column: usize) -> Self {
         self.line = Some(line);
         self.column = Some(column);
+        self
+    }
+
+    pub fn with_span(mut self, source: &str, span: &crate::source::SourceSpan) -> Self {
+        if let Some((start, end)) = span.positions(source) {
+            self.line = Some(start.line);
+            self.column = Some(start.column);
+            self.end_line = Some(end.line);
+            self.end_column = Some(end.column);
+        }
         self
     }
 
@@ -81,15 +97,21 @@ fn physical_location(
     root: &Path,
     line: Option<usize>,
     column: usize,
+    end: Option<(usize, usize)>,
 ) -> serde_json::Value {
     let mut location = serde_json::json!({
         "artifactLocation": {"uri": sarif_uri(path, root)}
     });
     if let Some(line) = line {
-        location["region"] = serde_json::json!({
+        let mut region = serde_json::json!({
             "startLine": line,
             "startColumn": column
         });
+        if let Some((end_line, end_column)) = end {
+            region["endLine"] = serde_json::json!(end_line);
+            region["endColumn"] = serde_json::json!(end_column);
+        }
+        location["region"] = region;
     }
     location
 }
@@ -133,14 +155,15 @@ pub fn render_with_root(
                         "relatedLocations": item.config_path.as_ref().map(|config| {
                             vec![serde_json::json!({
                                 "id": 1,
-                                "physicalLocation": physical_location(config, root, item.config_line, 1)
+                                "physicalLocation": physical_location(config, root, item.config_line, 1, None)
                             })]
                         }).unwrap_or_default(),
                         "locations": [{"physicalLocation": physical_location(
                             &item.path,
                             root,
                             item.line,
-                            item.column.unwrap_or(1)
+                            item.column.unwrap_or(1),
+                            item.end_line.zip(item.end_column)
                         )}]
                     })
                 })
