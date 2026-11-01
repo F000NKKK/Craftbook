@@ -55,6 +55,10 @@ fn inherited_dependency_policy_can_be_replaced_locally() {
     };
     let first = run(&["deps"]);
     assert!(!first.status.success());
+    let sarif = run(&["deps", "--format", "sarif"]);
+    assert!(!sarif.status.success());
+    let sarif_value: serde_json::Value = serde_json::from_slice(&sarif.stdout).unwrap();
+    assert_eq!(sarif_value["runs"][0]["results"][0]["ruleId"], "CB002");
     assert!(String::from_utf8_lossy(&first.stderr).contains("alpha must not depend on beta"));
 
     // Replacing arrays at the child scope removes the inherited restriction.
@@ -69,6 +73,10 @@ fn inherited_dependency_policy_can_be_replaced_locally() {
         String::from_utf8_lossy(&second.stderr)
     );
     assert!(run(&["check"]).status.success());
+    let json = run(&["check", "--format", "json"]);
+    assert!(json.status.success());
+    let json_value: serde_json::Value = serde_json::from_slice(&json.stdout).unwrap();
+    assert_eq!(json_value["success"], true);
     let config = run(&["config"]);
     assert!(config.status.success());
     let config_text = String::from_utf8_lossy(&config.stdout);
