@@ -28,7 +28,6 @@ pub fn merge(parent: &mut toml::Value, child: toml::Value) {
     }
 }
 
-
 /// Explain which configuration files contribute to a directory's policy,
 /// ordered from the least specific ancestor to the most specific one.
 pub fn sources(dir: &Path) -> Vec<PathBuf> {
@@ -123,7 +122,10 @@ mod tests {
         assert_eq!(merged["assurance"]["format"].as_bool(), Some(true));
         assert_eq!(merged["assurance"]["test"].as_bool(), Some(false));
         assert_eq!(discover(&root, "CraftBook.toml").unwrap().len(), 2);
-        assert_eq!(sources(&nested), vec![root.join("CraftBook.toml"), nested.join("CraftBook.toml")]);
+        assert_eq!(
+            sources(&nested),
+            vec![root.join("CraftBook.toml"), nested.join("CraftBook.toml")]
+        );
 
         fs::remove_dir_all(&root).unwrap();
     }
