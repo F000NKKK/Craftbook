@@ -133,3 +133,5 @@ The native checker also offers an experimental opt-in dependency rule check: `ca
 Nested `CraftBook.toml` files override parent settings; run `cargo craftcheck check` or `cargo craftcheck deps` from any configured directory to check its subtree. [Configuration details](tools/cargo-craftcheck/README.md#hierarchical-configuration).
 
 The native CLI can inspect inherited policy with `cargo craftcheck config` and show configuration sources with `cargo craftcheck explain`. Both commands operate on the current directory, without scanning unrelated sibling directories.
+
+Machine-readable checks: `cargo craftcheck check --format json` and `cargo craftcheck deps --format sarif` (SARIF 2.1.0). [Details](tools/cargo-craftcheck/README.md#structured-diagnostics).
