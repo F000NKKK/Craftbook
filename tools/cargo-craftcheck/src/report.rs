@@ -50,8 +50,9 @@ impl Format {
 }
 
 fn sarif_uri(path: &str, root: &Path) -> String {
-    let path = Path::new(path);
-    let relative = path.strip_prefix(root).unwrap_or(path);
+    let input = Path::new(path);
+    let resolved = std::fs::canonicalize(input).unwrap_or_else(|_| input.to_path_buf());
+    let relative = resolved.strip_prefix(root).unwrap_or(&resolved);
     relative.to_string_lossy().replace('\\', "/")
 }
 
