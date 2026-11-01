@@ -11,6 +11,10 @@ pub struct Diagnostic {
     pub config_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rule_index: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub column: Option<usize>,
 }
 
 impl Diagnostic {
@@ -21,7 +25,15 @@ impl Diagnostic {
             path: path.display().to_string(),
             config_path: None,
             rule_index: None,
+            line: None,
+            column: None,
         }
+    }
+
+    pub fn at(mut self, line: usize, column: usize) -> Self {
+        self.line = Some(line);
+        self.column = Some(column);
+        self
     }
 
     pub fn with_rule(mut self, config: &Path, index: usize) -> Self {
@@ -92,7 +104,11 @@ pub fn render_with_root(
                             "ruleIndex": item.rule_index
                         },
                         "locations": [{"physicalLocation": {
-                            "artifactLocation": {"uri": sarif_uri(&item.path, root)}
+                            "artifactLocation": {"uri": sarif_uri(&item.path, root)},
+                            "region": item.line.map(|line| serde_json::json!({
+                                "startLine": line,
+                                "startColumn": item.column.unwrap_or(1)
+                            }))
                         }}]
                     })
                 })
