@@ -51,3 +51,14 @@ Note: package-specific policy is taken from the package's own directory; no DDD 
 ## Inspecting policies
 
 Run `cargo craftcheck config` to print the validated effective TOML policy for the current working directory. Run `cargo craftcheck explain` to show the ordered source files and merged policy. Unlike `check` and `deps`, these inspection commands do not descend into sibling folders. `--config` selects a policy root; configuration is resolved for the current directory when it lies beneath that root.
+
+## Structured diagnostics
+
+`check` and `deps` support `--format text|json|sarif` (default `text`). JSON emits `schemaVersion`, `tool`, `success`, and `diagnostics` fields. SARIF emits a SARIF 2.1.0 `runs` structure for code-scanning systems. Nonempty diagnostics produce a nonzero exit code even when structured output is written to stdout.
+
+```sh
+cargo craftcheck check --format json
+cargo craftcheck deps --format sarif
+```
+
+Diagnostic identifiers: `CB001` (invalid policy), `CB002` (forbidden workspace edge), `CB003` (Cargo inspection failure). These formats currently report file locations, not source line positions. They do not imply Rust AST analysis.
