@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  policy:
+  self-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,7 +17,13 @@ jobs:
         with:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
-      - run: cargo fmt --all --check --manifest-path tools/cargo-craftcheck/Cargo.toml
-      - run: cargo clippy --all-targets --manifest-path tools/cargo-craftcheck/Cargo.toml -- -D warnings
-      - run: cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
-      - run: cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- check --config templates/CraftBook.toml
+      - name: Format
+        run: cargo fmt --all --check --manifest-path tools/cargo-craftcheck/Cargo.toml
+      - name: Clippy
+        run: cargo clippy --all-targets --manifest-path tools/cargo-craftcheck/Cargo.toml -- -D warnings
+      - name: Tests
+        run: cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
+      - name: Craftbook self-check (policy)
+        run: cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- check
+      - name: Craftbook self-check (workspace edges)
+        run: cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- deps
