@@ -8,9 +8,19 @@ use std::path::Path;
 use serde::Deserialize;
 
 const PROFILES: &[&str] = &[
-    "simple", "layered", "ddd", "hexagonal", "clean", "cqrs",
-    "event-sourcing", "actor", "systems", "embedded", "performance",
-    "functional-core", "plugin",
+    "simple",
+    "layered",
+    "ddd",
+    "hexagonal",
+    "clean",
+    "cqrs",
+    "event-sourcing",
+    "actor",
+    "systems",
+    "embedded",
+    "performance",
+    "functional-core",
+    "plugin",
 ];
 
 #[derive(Debug, Deserialize)]
@@ -114,7 +124,11 @@ no_std = true
     #[test]
     fn rejects_unknown_profile() {
         let policy = parse("version=2\nproject='x'\nprofiles=['unexpected']").unwrap();
-        assert!(validate(&policy).iter().any(|e| e.contains("unknown profile")));
+        assert!(
+            validate(&policy)
+                .iter()
+                .any(|e| e.contains("unknown profile"))
+        );
     }
 
     #[test]
