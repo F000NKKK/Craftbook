@@ -27,7 +27,7 @@ Craftbook v2 changes the **meaning of the standard**, not merely its directory l
 | Every I/O operation through a port | Ports when isolation is valuable |
 | Universal `Send + Sync` or `Clone` expectations | Implement traits only when meaningful |
 | Numeric coverage and mutation gates for every layer | Risk-based verification and explicit project requirements |
-| Mandatory legacy Python checker | Native Rust validator for v2 policy; legacy checker remains for historical comparison |
+| Mandatory legacy Python checker | Native Rust validator for v2 policy; legacy checker is available from historical Git tags |
 
 ## 🚀 Migration steps
 
@@ -51,7 +51,7 @@ cargo install --path tools/cargo-craftcheck
 cargo craftcheck check --config templates/CraftBook.toml
 ```
 
-It **does not yet validate Rust source architecture or Cargo dependency graphs**. The old `tools/craftcheck` remains available to compare existing v1 findings, but its output is not a mandatory gate for v2.
+It **does not parse Rust source architecture**; opt-in direct workspace dependency rules are supported. The former Python checker has been removed from `main`; use Git tag `v1` or `v2-rc0` to inspect its historical behavior. The native checker supports optional direct workspace edge rules but does not parse Rust source architecture.
 
 Verify the new utility independently:
 
