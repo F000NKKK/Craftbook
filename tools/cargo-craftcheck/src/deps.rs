@@ -1,6 +1,6 @@
 //! Workspace dependency rules backed by Cargo's own metadata output.
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use serde::Deserialize;
@@ -84,6 +84,100 @@ pub fn check_workspace(path: &Path, rules: &[DependencyRule]) -> Result<Vec<Stri
     let text = String::from_utf8(output.stdout)
         .map_err(|err| format!("cargo metadata returned non-UTF8 output: {err}"))?;
     check_metadata(&text, rules)
+}
+
+#[derive(Debug, Clone)]
+pub struct DependencyViolation {
+    pub from: String,
+    pub disallow: String,
+    pub manifest: PathBuf,
+    pub config: PathBuf,
+    pub rule_index: usize,
+}
+
+fn rule_source(directory: &Path, from: &str, disallow: &str) -> Result<(PathBuf, usize), String> {
+    for path in crate::scopes::sources(directory).into_iter().rev() {
+        let content = std::fs::read_to_string(&path)
+            .map_err(|error| format!("{}: {error}", path.display()))?;
+        let table: toml::Table = toml::from_str(&content)
+            .map_err(|error| format!("{}: {error}", path.display()))?;
+        if let Some(rules) = table.get("dependency_rule") {
+            let list = rules
+                .as_array()
+                .ok_or_else(|| format!("{}: dependency_rule must be an array", path.display()))?;
+            for (index, entry) in list.iter().enumerate() {
+                if entry.get("from").and_then(toml::Value::as_str) == Some(from)
+                    && entry.get("disallow").and_then(toml::Value::as_str) == Some(disallow)
+                {
+                    return Ok((path, index));
+                }
+            }
+            break;
+        }
+    }
+    Err(format!("unable to locate rule {from} -> {disallow}"))
+}
+
+/// Diagnose direct workspace violations with their actual source policy.
+pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>, String> {
+    let output = Command::new("cargo")
+        .args(["metadata", "--format-version", "1"])
+        .arg("--manifest-path")
+        .arg(path)
+        .output()
+        .map_err(|error| format!("cargo metadata: {error}"))?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).into_owned());
+    }
+    let metadata: Metadata = serde_json::from_slice(&output.stdout)
+        .map_err(|error| format!("invalid cargo metadata: {error}"))?;
+    let members: HashSet<&str> = metadata.workspace_members.iter().map(String::as_str).collect();
+    let packages: HashMap<&str, &Package> = metadata
+        .packages
+        .iter()
+        .filter(|package| members.contains(package.id.as_str()))
+        .map(|package| (package.id.as_str(), package))
+        .collect();
+    let mut violations = Vec::new();
+    for node in metadata.resolve.ok_or("missing resolved dependencies")?.nodes {
+        let Some(package) = packages.get(node.id.as_str()) else {
+            continue;
+        };
+        let manifest = PathBuf::from(&package.manifest_path);
+        let directory = manifest.parent().ok_or("invalid package manifest path")?;
+        let Some(raw) = crate::scopes::effective(directory)? else {
+            continue;
+        };
+        let policy: crate::Policy = raw
+            .try_into()
+            .map_err(|error| format!("{}: {error}", directory.display()))?;
+        let failures = crate::validate(&policy);
+        if !failures.is_empty() {
+            return Err(format!("{}: {}", directory.display(), failures.join("; ")));
+        }
+        for edge in node.deps {
+            let Some(target) = packages.get(edge.pkg.as_str()) else {
+                continue;
+            };
+            if policy
+                .dependency_rule
+                .iter()
+                .any(|rule| rule.from == package.name && rule.disallow == target.name)
+            {
+                let (config, rule_index) = rule_source(directory, &package.name, &target.name)?;
+                violations.push(DependencyViolation {
+                    from: package.name.clone(),
+                    disallow: target.name.clone(),
+                    manifest: manifest.clone(),
+                    config,
+                    rule_index,
+                });
+            }
+        }
+    }
+    violations.sort_by(|a, b| a.manifest.cmp(&b.manifest).then(a.disallow.cmp(&b.disallow)));
+    violations.dedup_by(|a, b| a.manifest == b.manifest && a.disallow == b.disallow);
+    Ok(violations)
 }
 
 /// Validate each package with the effective policy of its own directory.
