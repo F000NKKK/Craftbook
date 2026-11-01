@@ -1,0 +1,5 @@
+# Inherits the root policy. Overrides only the selected local profile.
+profiles = ["simple", "performance"]
+
+# These boundaries are checked via cargo metadata when other workspace
+# members are introduced. Empty rules are intentional for the single-crate CLI.
