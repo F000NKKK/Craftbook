@@ -128,3 +128,5 @@ Craftbook — инженерный справочник, а не формаль�
 [⬆ Наверх](#top) · [English](README.md) · [Миграция](MIGRATION.ru.md)
 
 </div>
+
+Нативная утилита также поддерживает экспериментальную проверку явно запрещённых прямых зависимостей между пакетами workspace: `cargo craftcheck deps --config craftbook.toml --manifest-path Cargo.toml`. Используется Cargo Metadata; слои DDD автоматически не навязываются.
