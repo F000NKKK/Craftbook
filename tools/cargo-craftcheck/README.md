@@ -76,3 +76,7 @@ Nested independent workspaces are discovered separately; multiple manifests belo
 ### SARIF artifact paths (v2-rc2)
 
 SARIF `artifactLocation.uri` is emitted relative to the selected `CraftBook.toml` project root when the file is inside that tree. Absolute or externally located artifacts retain their original paths. The `configPath` property preserves the configuration provenance and `ruleIndex` identifies the zero-based rule entry. This does not imply a source-code line location or an automatic upload to GitHub Code Scanning.
+
+### Source positions (v2-rc2)
+
+For unambiguous direct Cargo dependency declarations, `CB002` diagnostics now include a one-based `line` and `column` in JSON and a SARIF `region` on the source package's `Cargo.toml`. The source `[[dependency_rule]]` header is included as a SARIF `relatedLocations` entry and `config_line` in JSON. If a dependency uses an alias or a rule uses a nonstandard inline representation, positions that cannot be determined reliably are omitted rather than invented. Paths and zero-based `rule_index` remain available.
