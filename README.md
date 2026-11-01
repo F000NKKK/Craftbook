@@ -39,3 +39,10 @@ No standard can guarantee correctness, security, architecture quality or fit for
 ## Native Rust tooling (experimental)
 
 The new [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) validates v2 policy without Python. Install with `cargo install --path tools/cargo-craftcheck`, then run `cargo craftcheck check --config craftbook.toml`. Its current scope is **policy validation only**; source and dependency analysis remain future work. [CI workflow](.github/workflows/craftbook-v2.yml).
+
+## Advanced Rust guides
+
+- [Ownership and lifetimes](rust/11-ownership-and-lifetimes.md)
+- [Async, actors and cancellation](rust/12-async-and-concurrency.md)
+- [Unsafe, FFI and low-level code](rust/13-unsafe-and-ffi.md)
+- [Cargo and compatibility](rust/14-cargo-and-compatibility.md)
