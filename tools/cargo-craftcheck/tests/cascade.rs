@@ -59,11 +59,16 @@ fn inherited_dependency_policy_can_be_replaced_locally() {
     assert!(!sarif.status.success());
     let sarif_value: serde_json::Value = serde_json::from_slice(&sarif.stdout).unwrap();
     assert_eq!(sarif_value["runs"][0]["results"][0]["ruleId"], "CB002");
-    assert_eq!(sarif_value["runs"][0]["results"][0]["properties"]["ruleIndex"], 0);
-    assert!(sarif_value["runs"][0]["results"][0]["properties"]["configPath"]
-        .as_str()
-        .unwrap()
-        .ends_with("CraftBook.toml"));
+    assert_eq!(
+        sarif_value["runs"][0]["results"][0]["properties"]["ruleIndex"],
+        0
+    );
+    assert!(
+        sarif_value["runs"][0]["results"][0]["properties"]["configPath"]
+            .as_str()
+            .unwrap()
+            .ends_with("CraftBook.toml")
+    );
     assert!(sarif_value["runs"][0]["results"][0]["locations"][0]["physicalLocation"]
         ["artifactLocation"]["uri"]
         .as_str()
@@ -149,9 +154,11 @@ fn independent_nested_workspace_is_checked_separately() {
     assert!(!output.status.success());
     let json: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(json["diagnostics"].as_array().unwrap().len(), 1);
-    assert!(json["diagnostics"][0]["path"]
-        .as_str()
-        .unwrap()
-        .ends_with("isolated/CraftBook.toml"));
+    assert!(
+        json["diagnostics"][0]["path"]
+            .as_str()
+            .unwrap()
+            .ends_with("isolated/CraftBook.toml")
+    );
     fs::remove_dir_all(&directory).unwrap();
 }
