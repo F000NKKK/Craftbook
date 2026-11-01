@@ -39,8 +39,8 @@ pub fn effective(dir: &Path) -> Result<Option<toml::Value>, String> {
             continue;
         }
         let raw = fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
-        let value = raw
-            .parse::<toml::Value>()
+        let value = toml::from_str::<toml::Table>(&raw)
+            .map(toml::Value::Table)
             .map_err(|e| format!("{}: {e}", path.display()))?;
         if !value.is_table() {
             return Err(format!("{}: expected a TOML table", path.display()));
@@ -82,8 +82,8 @@ mod tests {
 
     #[test]
     fn nested_table_overrides_one_key_without_erasing_siblings() {
-        let mut base: toml::Value = "[assurance]\ntest=true\nclippy=true".parse().unwrap();
-        let child = "[assurance]\nclippy=false".parse().unwrap();
+        let mut base = toml::Value::Table(toml::from_str("[assurance]\ntest=true\nclippy=true").unwrap());
+        let child = toml::Value::Table(toml::from_str("[assurance]\nclippy=false").unwrap());
         merge(&mut base, child);
         assert_eq!(base["assurance"]["test"].as_bool(), Some(true));
         assert_eq!(base["assurance"]["clippy"].as_bool(), Some(false));
@@ -123,8 +123,8 @@ mod tests {
 
     #[test]
     fn arrays_replace_parent_arrays() {
-        let mut base: toml::Value = "profiles=['ddd']".parse().unwrap();
-        merge(&mut base, "profiles=['systems']".parse().unwrap());
+        let mut base = toml::Value::Table(toml::from_str("profiles=['ddd']").unwrap());
+        merge(&mut base, toml::Value::Table(toml::from_str("profiles=['systems']").unwrap()));
         assert_eq!(base["profiles"][0].as_str(), Some("systems"));
     }
 }
