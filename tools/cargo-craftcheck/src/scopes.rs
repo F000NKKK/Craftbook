@@ -86,7 +86,6 @@ mod tests {
         assert_eq!(base["assurance"]["clippy"].as_bool(), Some(false));
     }
 
-
     #[test]
     fn nested_configuration_inherits_parent_and_overrides_selected_fields() {
         use std::sync::atomic::{AtomicUsize, Ordering};
@@ -99,12 +98,12 @@ mod tests {
         fs::create_dir_all(&nested).unwrap();
         fs::write(
             root.join("CraftBook.toml"),
-            "version=2\\nproject='root'\\nprofiles=['simple']\\n[assurance]\\nformat=true\\ntest=true",
+            "version=2\nproject='root'\nprofiles=['simple']\n[assurance]\nformat=true\ntest=true",
         )
         .unwrap();
         fs::write(
             nested.join("CraftBook.toml"),
-            "profiles=['systems']\\n[assurance]\\ntest=false",
+            "profiles=['systems']\n[assurance]\ntest=false",
         )
         .unwrap();
 
