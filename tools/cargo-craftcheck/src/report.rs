@@ -49,7 +49,22 @@ impl Format {
     }
 }
 
+fn sarif_uri(path: &str, root: &Path) -> String {
+    let path = Path::new(path);
+    let relative = path.strip_prefix(root).unwrap_or(path);
+    relative.to_string_lossy().replace('\\', "/")
+}
+
 pub fn render(format: Format, findings: &[Diagnostic]) -> Result<String, String> {
+    render_with_root(format, findings, Path::new("."))
+}
+
+/// Render SARIF paths relative to the selected project root when possible.
+pub fn render_with_root(
+    format: Format,
+    findings: &[Diagnostic],
+    root: &Path,
+) -> Result<String, String> {
     match format {
         Format::Text => Ok(findings
             .iter()
@@ -76,7 +91,7 @@ pub fn render(format: Format, findings: &[Diagnostic]) -> Result<String, String>
                             "ruleIndex": item.rule_index
                         },
                         "locations": [{"physicalLocation": {
-                            "artifactLocation": {"uri": item.path}
+                            "artifactLocation": {"uri": sarif_uri(&item.path, root)}
                         }}]
                     })
                 })
@@ -123,6 +138,33 @@ mod tests {
         let value: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(value["version"], "2.1.0");
         assert_eq!(value["runs"][0]["results"][0]["ruleId"], "CB002");
+    }
+
+
+    #[test]
+    fn sarif_paths_are_relative_to_project_root() {
+        let finding = Diagnostic::new(
+            "CB002",
+            "forbidden edge",
+            Path::new("/project/crates/alpha/Cargo.toml"),
+        )
+        .with_rule(Path::new("/project/CraftBook.toml"), 0);
+        let result = render_with_root(
+            Format::Sarif,
+            &[finding],
+            Path::new("/project"),
+        )
+        .unwrap();
+        let value: serde_json::Value = serde_json::from_str(&result).unwrap();
+        assert_eq!(
+            value["runs"][0]["results"][0]["locations"][0]["physicalLocation"]
+                ["artifactLocation"]["uri"],
+            "crates/alpha/Cargo.toml"
+        );
+        assert_eq!(
+            value["runs"][0]["results"][0]["properties"]["ruleIndex"],
+            0
+        );
     }
 
     #[test]
