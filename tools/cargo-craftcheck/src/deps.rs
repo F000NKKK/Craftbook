@@ -16,6 +16,8 @@ struct Metadata {
 struct Package {
     id: String,
     name: String,
+    #[serde(default)]
+    manifest_path: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -58,6 +60,63 @@ pub fn check_workspace(path: &Path, rules: &[DependencyRule]) -> Result<Vec<Stri
     let text = String::from_utf8(output.stdout)
         .map_err(|err| format!("cargo metadata returned non-UTF8 output: {err}"))?;
     check_metadata(&text, rules)
+}
+
+/// Validate each package with the effective policy of its own directory.
+/// A nested CraftBook.toml can replace inherited dependency rules.
+pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
+    let output = Command::new("cargo")
+        .args(["metadata", "--format-version", "1"])
+        .arg("--manifest-path")
+        .arg(path)
+        .output()
+        .map_err(|e| format!("cargo metadata: {e}"))?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).into_owned());
+    }
+    let metadata: Metadata = serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("invalid cargo metadata: {e}"))?;
+    let members: HashSet<&str> =
+        metadata.workspace_members.iter().map(String::as_str).collect();
+    let packages: HashMap<&str, &Package> = metadata
+        .packages
+        .iter()
+        .filter(|p| members.contains(p.id.as_str()))
+        .map(|p| (p.id.as_str(), p))
+        .collect();
+    let mut findings = Vec::new();
+    let nodes = metadata.resolve.ok_or("missing resolved dependencies")?.nodes;
+    for node in nodes {
+        let Some(package) = packages.get(node.id.as_str()) else {
+            continue;
+        };
+        let Some(dir) = Path::new(&package.manifest_path).parent() else {
+            return Err(format!("invalid manifest path for {}", package.name));
+        };
+        let Some(raw) = crate::scopes::effective(dir)? else {
+            continue;
+        };
+        let policy: crate::Policy = raw.try_into()
+            .map_err(|e| format!("{}: {e}", dir.display()))?;
+        let errors = crate::validate(&policy);
+        if !errors.is_empty() {
+            return Err(format!("{}: {}", dir.display(), errors.join("; ")));
+        }
+        for edge in node.deps {
+            let Some(target) = packages.get(edge.pkg.as_str()) else {
+                continue;
+            };
+            if policy.dependency_rule.iter().any(|rule| {
+                rule.from == package.name && rule.disallow == target.name
+            }) {
+                findings.push(format!("{}: {} must not depend on {}",
+                    dir.display(), package.name, target.name));
+            }
+        }
+    }
+    findings.sort();
+    findings.dedup();
+    Ok(findings)
 }
 
 /// Analyze only direct edges between members of the same workspace.
