@@ -1,23 +1,49 @@
 # cargo-craftcheck
 
-Native Rust implementation of the Craftbook v2 policy validator. No Python runtime is required.
+A native Rust checker for Craftbook project policies and Cargo workspace dependency boundaries. No Python runtime is required.
 
-Install from this repository:
+## Installation
+
+From the repository root:
 
 ```sh
 cargo install --path tools/cargo-craftcheck
-cargo craftcheck check --config templates/CraftBook.toml
 ```
 
-Run its tests: `cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml`.
+## Commands
 
-## Current scope
+```sh
+cargo craftcheck check
+cargo craftcheck deps
+cargo craftcheck config
+cargo craftcheck explain
 
-Validates schema, v2 version, nonempty project, supported profiles, unique profiles and boolean assurance/constraint options. Unknown keys fail validation. Does **not** inspect Rust source semantics. The optional `deps` command checks direct resolved workspace edges. The historical Python checker is available from the v1 and v2-rc0 Git tags; main contains only the Rust checker.
+cargo craftcheck check --format json
+cargo craftcheck deps --format sarif
+cargo craftcheck deps --manifest-path Cargo.toml
+cargo craftcheck check --config CraftBook.toml
+```
 
-## Workspace dependency rules
+| Command | Behavior |
+| --- | --- |
+| `check` | Validate effective policies for all discovered `CraftBook.toml` files |
+| `deps` | Check opt-in forbidden direct dependencies between Cargo workspace members |
+| `config` | Print the effective policy for the current directory |
+| `explain` | Show the policy's source files in inheritance order and the resulting configuration |
 
-Define forbidden **direct** edges between workspace package names in a v2 policy:
+The default command is `check`. `--format text|json|sarif` is available for `check` and `deps`. A violation results in a nonzero exit code.
+
+## Configuration
+
+The configuration file must be named `CraftBook.toml` (case-sensitive). Place it beside a `Cargo.toml` or in a parent directory. The checker finds the nearest ancestor configuration and recursively inspects the corresponding subtree. Directories such as `.git`, `target`, `node_modules`, `.idea`, and `.venv` are excluded.
+
+Child configurations inherit parent settings. Tables merge recursively; scalar and array values replace inherited values. In particular, a child `dependency_rule` array replaces the entire parent array.
+
+See [the policy template](../../templates/CraftBook.toml) and [the project's own policy](../../CraftBook.toml).
+
+### Dependency boundaries
+
+Define forbidden direct edges by Cargo package name:
 
 ```toml
 [[dependency_rule]]
@@ -25,58 +51,34 @@ from = "domain"
 disallow = "infrastructure"
 ```
 
-Run:
+`deps` uses `cargo metadata` and evaluates the effective policy of each workspace member. It scans each distinct Cargo workspace once, even when multiple member manifests are discovered. Independent nested workspaces are analyzed separately. External registry dependencies and transitive edges are not prohibited by these rules.
+
+## Diagnostics
+
+`check` and `deps` emit human-readable text by default. Structured output supports JSON and SARIF 2.1.0.
+
+| ID | Meaning |
+| --- | --- |
+| `CB001` | Invalid policy |
+| `CB002` | Forbidden direct workspace dependency |
+| `CB003` | Cargo workspace inspection failed |
+
+For `CB002`, JSON includes the package manifest path, `config_path` and zero-based `rule_index`. When source positions can be determined, it also includes one-based `line`, `column`, and `config_line`. SARIF supplies a primary location in the package's `Cargo.toml`, a related location in the governing `CraftBook.toml`, and `properties.configPath` / `properties.ruleIndex`.
+
+SARIF file URIs are relative to the selected project root where possible. Locations without a reliable source position omit the `region` field rather than reporting a guessed position. No upload to GitHub Code Scanning is performed by the checker itself.
+
+## Scope and limitations
+
+The tool validates policies and explicitly configured direct Cargo workspace dependency boundaries. It does not parse Rust syntax, enforce universal architectural layers, or replace rustc, Clippy, rustfmt, tests, or code review.
+
+## Development and self-check
 
 ```sh
-cargo craftcheck deps --config CraftBook.toml --manifest-path Cargo.toml
+cargo fmt --all --check --manifest-path tools/cargo-craftcheck/Cargo.toml
+cargo clippy --all-targets --manifest-path tools/cargo-craftcheck/Cargo.toml -- -D warnings
+cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
+cargo run --manifest-path tools/cargo-craftcheck/Cargo.toml -- check
+cargo run --manifest-path tools/cargo-craftcheck/Cargo.toml -- deps
 ```
 
-This uses `cargo metadata --format-version 1` and checks only direct resolved dependencies between members of the selected Cargo workspace. It deliberately does not infer DDD layers, prohibit external crates, or inspect the Rust AST. The rule is opt-in. The tool currently prints text diagnostics; JSON/SARIF are not yet supported.
-
-## Hierarchical configuration
-
-A project uses a case-sensitive `CraftBook.toml`. Place one next to `Cargo.toml` or in a parent directory. Nested configuration files may override inherited values: tables merge recursively; scalar values and arrays replace their parents. In particular, `[[dependency_rule]]` in a child replaces the inherited rule list.
-
-From any directory containing `CraftBook.toml` (or below one):
-
-```sh
-cargo craftcheck check
-cargo craftcheck deps
-```
-
-By default, commands start at the directory containing the nearest ancestor `CraftBook.toml`, descend recursively (excluding `.git`, `target`, `node_modules`, `.idea`, `.venv`), and process nested configurations. `deps` discovers Cargo manifests and resolves workspace dependencies through Cargo metadata. Use `--manifest-path` to limit dependency checks to one Cargo manifest. `--config PATH` selects another configuration root.
-
-Note: package-specific policy is taken from the package's own directory; no DDD layering is implicit. Source-code semantics still belong to rustc and Clippy.
-
-## Inspecting policies
-
-Run `cargo craftcheck config` to print the validated effective TOML policy for the current working directory. Run `cargo craftcheck explain` to show the ordered source files and merged policy. Unlike `check` and `deps`, these inspection commands do not descend into sibling folders. `--config` selects a policy root; configuration is resolved for the current directory when it lies beneath that root.
-
-## Structured diagnostics
-
-`check` and `deps` support `--format text|json|sarif` (default `text`). JSON emits `schemaVersion`, `tool`, `success`, and `diagnostics` fields. SARIF emits a SARIF 2.1.0 `runs` structure for code-scanning systems. Nonempty diagnostics produce a nonzero exit code even when structured output is written to stdout.
-
-```sh
-cargo craftcheck check --format json
-cargo craftcheck deps --format sarif
-```
-
-Diagnostic identifiers: `CB001` (invalid policy), `CB002` (forbidden workspace edge), `CB003` (Cargo inspection failure). These formats currently report file locations, not source line positions. They do not imply Rust AST analysis.
-
-### Workspace discovery
-
-When recursive discovery finds the root `Cargo.toml` and member manifests of the same Cargo workspace, dependency rules are checked once per workspace root (identified using `cargo metadata --no-deps`). Distinct nested workspaces are checked separately. Errors in discovering a workspace are reported as `CB003` rather than silently skipped.
-
-## Rule provenance (v2-rc2 development)
-
-Dependency violations now point to the **source package's** `Cargo.toml`, not the workspace root, and include the active `CraftBook.toml` path and zero-based `rule_index`. The human-readable diagnostic also shows the corresponding one-based rule number. JSON includes `config_path` and `rule_index` when a matching policy rule exists. SARIF includes `properties.configPath` and `properties.ruleIndex` alongside the package manifest location. No source line number is inferred.
-
-Nested independent workspaces are discovered separately; multiple manifests belonging to one Cargo workspace share one dependency analysis. Explicit policy validation still descends into every nested `CraftBook.toml`.
-
-### SARIF artifact paths (v2-rc2)
-
-SARIF `artifactLocation.uri` is emitted relative to the selected `CraftBook.toml` project root when the file is inside that tree. Absolute or externally located artifacts retain their original paths. The `configPath` property preserves the configuration provenance and `ruleIndex` identifies the zero-based rule entry. This does not imply a source-code line location or an automatic upload to GitHub Code Scanning.
-
-### Source positions (v2-rc2)
-
-For unambiguous direct Cargo dependency declarations, `CB002` diagnostics now include a one-based `line` and `column` in JSON and a SARIF `region` on the source package's `Cargo.toml`. The source `[[dependency_rule]]` header is included as a SARIF `relatedLocations` entry and `config_line` in JSON. If a dependency uses an alias or a rule uses a nonstandard inline representation, positions that cannot be determined reliably are omitted rather than invented. Paths and zero-based `rule_index` remain available.
+The root and crate-local `CraftBook.toml` files are part of the project's own CI checks.
