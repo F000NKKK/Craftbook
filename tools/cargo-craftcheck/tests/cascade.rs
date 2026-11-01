@@ -197,6 +197,10 @@ fn invalid_nested_toml_produces_structured_diagnostic() {
     let result: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(result["success"], false);
     assert_eq!(result["diagnostics"][0]["rule_id"], "CB001");
+    assert_eq!(result["diagnostics"][0]["line"], 1);
+    assert!(result["diagnostics"][0]["column"].as_u64().is_some());
+    assert!(result["diagnostics"][0]["end_line"].as_u64().is_some());
+    assert!(result["diagnostics"][0]["end_column"].as_u64().is_some());
     assert!(
         result["diagnostics"][0]["path"]
             .as_str()
