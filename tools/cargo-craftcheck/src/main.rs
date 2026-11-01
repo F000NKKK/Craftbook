@@ -153,10 +153,20 @@ fn run() -> Result<(), String> {
             if !seen_workspaces.insert(workspace_root) {
                 continue;
             }
-            match cargo_craftcheck::deps::check_workspace_scoped(&path) {
-                Ok(errors) => {
-                    for message in errors {
-                        diagnostics.push(Diagnostic::new("CB002", message, &path));
+            match cargo_craftcheck::deps::inspect_workspace_scoped(&path) {
+                Ok(violations) => {
+                    for violation in violations {
+                        let message = format!(
+                            "{} must not depend on {} (rule #{} in {})",
+                            violation.from,
+                            violation.disallow,
+                            violation.rule_index + 1,
+                            violation.config.display()
+                        );
+                        diagnostics.push(
+                            Diagnostic::new("CB002", message, &violation.manifest)
+                                .with_rule(&violation.config, violation.rule_index),
+                        );
                     }
                 }
                 Err(error) => diagnostics.push(Diagnostic::new("CB003", error, &path)),
