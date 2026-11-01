@@ -1,0 +1,22 @@
+# Craftbook v2 hierarchical policy.
+# Place CraftBook.toml next to Cargo.toml or in any enclosing directory.
+# Nested files override scalars/maps; lists replace inherited lists.
+version = 2
+project = "example"
+profiles = ["simple"]
+
+[assurance]
+format = true
+clippy = true
+test = true
+docs = true
+
+[constraints]
+no_std = false
+public_api_stable = false
+unsafe_review_required = true
+
+# Optional forbidden direct edge between workspace members:
+# [[dependency_rule]]
+# from = "example-domain"
+# disallow = "example-infrastructure"
