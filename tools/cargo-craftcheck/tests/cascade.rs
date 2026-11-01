@@ -205,3 +205,69 @@ fn invalid_nested_toml_produces_structured_diagnostic() {
     );
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn reports_multiple_workspace_edges_with_aliases_and_target_sections() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-multiple-edges-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    fs::create_dir_all(&directory).unwrap();
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\nproject = 'fixture'\nprofiles = ['simple']\n[[dependency_rule]]\nfrom = 'app'\ndisallow = 'core'\n[[dependency_rule]]\nfrom = 'app'\ndisallow = 'utils'\n",
+    );
+    write(
+        &directory.join("Cargo.toml"),
+        "[workspace]\nmembers = ['app', 'core', 'utils']\nresolver = '2'\n",
+    );
+    write(
+        &directory.join("app/Cargo.toml"),
+        "[package]\nname = 'app'\nversion = '0.1.0'\nedition = '2024'\n[dependencies]\nrenamed_core = { package = 'core', path = '../core' }\n[target.'cfg(unix)'.dependencies]\nutils = { path = '../utils' }\n",
+    );
+    write(
+        &directory.join("app/src/lib.rs"),
+        "pub fn app() { let _ = renamed_core::core(); }\n",
+    );
+    for name in ["core", "utils"] {
+        write(
+            &directory.join(name).join("Cargo.toml"),
+            &format!("[package]\nname = '{name}'\nversion = '0.1.0'\nedition = '2024'\n"),
+        );
+        write(
+            &directory.join(name).join("src/lib.rs"),
+            &format!("pub fn {name}() {{}}\n"),
+        );
+    }
+
+    let executable = env!("CARGO_BIN_EXE_cargo-craftcheck");
+    let output = Command::new(executable)
+        .args(["deps", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(
+        !output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let json: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let diagnostics = json["diagnostics"].as_array().unwrap();
+    assert_eq!(diagnostics.len(), 2);
+    assert!(diagnostics.iter().all(|entry| entry["rule_id"] == "CB002"));
+    assert_eq!(diagnostics[0]["line"], 6);
+    assert_eq!(diagnostics[1]["line"], 8);
+    assert_ne!(diagnostics[0]["rule_index"], diagnostics[1]["rule_index"]);
+
+    let sarif = Command::new(executable)
+        .args(["deps", "--format", "sarif"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!sarif.status.success());
+    let report: serde_json::Value = serde_json::from_slice(&sarif.stdout).unwrap();
+    assert_eq!(report["runs"][0]["results"].as_array().unwrap().len(), 2);
+    fs::remove_dir_all(&directory).unwrap();
+}
