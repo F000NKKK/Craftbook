@@ -59,6 +59,7 @@ fn inherited_dependency_policy_can_be_replaced_locally() {
     assert!(!sarif.status.success());
     let sarif_value: serde_json::Value = serde_json::from_slice(&sarif.stdout).unwrap();
     assert_eq!(sarif_value["runs"][0]["results"][0]["ruleId"], "CB002");
+    assert_eq!(sarif_value["runs"][0]["results"].as_array().unwrap().len(), 1);
     assert!(String::from_utf8_lossy(&first.stderr).contains("alpha must not depend on beta"));
 
     // Replacing arrays at the child scope removes the inherited restriction.
