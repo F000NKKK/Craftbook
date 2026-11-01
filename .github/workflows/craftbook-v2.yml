@@ -27,3 +27,9 @@ jobs:
         run: cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- check
       - name: Craftbook self-check (workspace edges)
         run: cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- deps
+      - name: Nested self-check (policy)
+        working-directory: tools/cargo-craftcheck
+        run: cargo run --quiet -- check
+      - name: Nested self-check (dependencies)
+        working-directory: tools/cargo-craftcheck
+        run: cargo run --quiet -- deps
