@@ -13,7 +13,7 @@ Run its tests: `cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml`.
 
 ## Current scope
 
-Validates schema, v2 version, nonempty project, supported profiles, unique profiles and boolean assurance/constraint options. Unknown keys fail validation. Does **not** inspect Rust source semantics. The optional `deps` command checks direct resolved workspace edges. The old Python `tools/craftcheck` uses v1 rules and is not a replacement for this tool.
+Validates schema, v2 version, nonempty project, supported profiles, unique profiles and boolean assurance/constraint options. Unknown keys fail validation. Does **not** inspect Rust source semantics. The optional `deps` command checks direct resolved workspace edges. The historical Python checker is available from the v1 and v2-rc0 Git tags; main contains only the Rust checker.
 
 ## Workspace dependency rules
 
