@@ -13,3 +13,7 @@ The historical `tools/craftcheck` enforces Craftbook v1 and is retained **only f
 Example: `python3 tools/craftcheck_v2.py templates/craftbook.toml`.
 
 A hard CI gate needs a demonstrable correctness, security, compatibility or declared project-contract reason. Arbitrary line limits, naming blacklists and test percentages are advisory signals, not universal failures.
+
+## Native Cargo subcommand
+
+The experimental [`cargo-craftcheck`](../tools/cargo-craftcheck/README.md) implements v2 policy validation in Rust, independently of Python. Its automated tests are in the [v2 CI workflow](../.github/workflows/craftbook-v2.yml). Further dependency and source checks require explicit rules and suitable parsers; the first version does not claim to provide them.
