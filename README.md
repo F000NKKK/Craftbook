@@ -128,3 +128,5 @@ Craftbook is a handbook, not a correctness proof: project requirements, measurem
 [⬆ Back to top](#top) · [Русская версия](README.ru.md) · [Migration guide](MIGRATION.md)
 
 </div>
+
+The native checker also offers an experimental opt-in dependency rule check: `cargo craftcheck deps --config craftbook.toml --manifest-path Cargo.toml`. It uses Cargo Metadata and checks direct workspace dependencies only.
