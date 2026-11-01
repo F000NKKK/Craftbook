@@ -47,3 +47,7 @@ cargo craftcheck deps
 By default, commands start at the directory containing the nearest ancestor `CraftBook.toml`, descend recursively (excluding `.git`, `target`, `node_modules`, `.idea`, `.venv`), and process nested configurations. `deps` discovers Cargo manifests and resolves workspace dependencies through Cargo metadata. Use `--manifest-path` to limit dependency checks to one Cargo manifest. `--config PATH` selects another configuration root.
 
 Note: package-specific policy is taken from the package's own directory; no DDD layering is implicit. Source-code semantics still belong to rustc and Clippy.
+
+## Inspecting policies
+
+Run `cargo craftcheck config` to print the validated effective TOML policy for the current working directory. Run `cargo craftcheck explain` to show the ordered source files and merged policy. Unlike `check` and `deps`, these inspection commands do not descend into sibling folders. `--config` selects a policy root; configuration is resolved for the current directory when it lies beneath that root.
