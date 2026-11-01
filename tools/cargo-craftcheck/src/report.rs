@@ -7,6 +7,10 @@ pub struct Diagnostic {
     pub rule_id: String,
     pub message: String,
     pub path: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rule_index: Option<usize>,
 }
 
 impl Diagnostic {
@@ -15,7 +19,15 @@ impl Diagnostic {
             rule_id: rule_id.to_owned(),
             message: message.into(),
             path: path.display().to_string(),
+            config_path: None,
+            rule_index: None,
         }
+    }
+
+    pub fn with_rule(mut self, config: &Path, index: usize) -> Self {
+        self.config_path = Some(config.display().to_string());
+        self.rule_index = Some(index);
+        self
     }
 }
 
@@ -59,6 +71,10 @@ pub fn render(format: Format, findings: &[Diagnostic]) -> Result<String, String>
                         "ruleId": item.rule_id,
                         "level": "error",
                         "message": {"text": item.message},
+                        "properties": {
+                            "configPath": item.config_path,
+                            "ruleIndex": item.rule_index
+                        },
                         "locations": [{"physicalLocation": {
                             "artifactLocation": {"uri": item.path}
                         }}]
