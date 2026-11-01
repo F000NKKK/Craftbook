@@ -6,7 +6,7 @@ use std::process::ExitCode;
 
 fn usage() {
     println!(
-        "Usage: cargo craftcheck [check|deps] [--config CraftBook.toml] [--manifest-path Cargo.toml]"
+        "Usage: cargo craftcheck [check|deps|config|explain] [--config CraftBook.toml] [--manifest-path Cargo.toml]"
     );
 }
 
@@ -42,6 +42,14 @@ fn run() -> Result<(), String> {
         Some("deps") => {
             args.next();
             "deps"
+        }
+        Some("config") => {
+            args.next();
+            "config"
+        }
+        Some("explain") => {
+            args.next();
+            "explain"
         }
         _ => "check",
     };
@@ -81,6 +89,26 @@ fn run() -> Result<(), String> {
         return Err("--config must point to a CraftBook.toml file".into());
     }
     let root = root_config.parent().ok_or("invalid --config path")?;
+    if command == "config" || command == "explain" {
+        let target = if cwd.starts_with(root) { cwd.as_path() } else { root };
+        let merged = cargo_craftcheck::scopes::effective(target)?
+            .ok_or("no CraftBook.toml found")?;
+        let policy: cargo_craftcheck::Policy = merged.clone().try_into()
+            .map_err(|e| format!("invalid effective policy: {e}"))?;
+        let findings = cargo_craftcheck::validate(&policy);
+        if !findings.is_empty() {
+            return Err(findings.join("\n"));
+        }
+        if command == "explain" {
+            println!("Configuration sources (global to local):");
+            for path in cargo_craftcheck::scopes::sources(target) {
+                println!("  {}", path.display());
+            }
+            println!("Nested tables merge; scalars and arrays replace inherited values.");
+        }
+        println!("{merged}");
+        return Ok(());
+    }
     check_policy_tree(root)?;
 
     if command == "deps" {
