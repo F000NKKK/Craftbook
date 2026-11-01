@@ -206,4 +206,13 @@ mod tests {
     fn unknown_format_is_rejected() {
         assert!(Format::parse("xml").is_err());
     }
+    #[test]
+    fn unknown_locations_have_no_sarif_region() {
+        let finding = Diagnostic::new("CB003", "workspace inspection failed", Path::new("Cargo.toml"));
+        let output = render(Format::Sarif, &[finding]).unwrap();
+        let value: serde_json::Value = serde_json::from_str(&output).unwrap();
+        let location = &value["runs"][0]["results"][0]["locations"][0]["physicalLocation"];
+        assert!(location.get("region").is_none());
+    }
+
 }
