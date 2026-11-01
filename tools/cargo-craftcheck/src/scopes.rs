@@ -86,6 +86,38 @@ mod tests {
         assert_eq!(base["assurance"]["clippy"].as_bool(), Some(false));
     }
 
+
+    #[test]
+    fn nested_configuration_inherits_parent_and_overrides_selected_fields() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        static SERIAL: AtomicUsize = AtomicUsize::new(0);
+        let sequence = SERIAL.fetch_add(1, Ordering::Relaxed);
+        let root = std::env::temp_dir().join(format!(
+            "craftbook-scopes-{}-{sequence}", std::process::id()
+        ));
+        let nested = root.join("subsystem");
+        fs::create_dir_all(&nested).unwrap();
+        fs::write(
+            root.join("CraftBook.toml"),
+            "version=2\\nproject='root'\\nprofiles=['simple']\\n[assurance]\\nformat=true\\ntest=true",
+        )
+        .unwrap();
+        fs::write(
+            nested.join("CraftBook.toml"),
+            "profiles=['systems']\\n[assurance]\\ntest=false",
+        )
+        .unwrap();
+
+        let merged = effective(&nested).unwrap().unwrap();
+        assert_eq!(merged["project"].as_str(), Some("root"));
+        assert_eq!(merged["profiles"][0].as_str(), Some("systems"));
+        assert_eq!(merged["assurance"]["format"].as_bool(), Some(true));
+        assert_eq!(merged["assurance"]["test"].as_bool(), Some(false));
+        assert_eq!(discover(&root, "CraftBook.toml").unwrap().len(), 2);
+
+        fs::remove_dir_all(&root).unwrap();
+    }
+
     #[test]
     fn arrays_replace_parent_arrays() {
         let mut base: toml::Value = "profiles=['ddd']".parse().unwrap();
