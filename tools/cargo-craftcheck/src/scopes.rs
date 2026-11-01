@@ -79,9 +79,8 @@ mod tests {
 
     #[test]
     fn nested_table_overrides_one_key_without_erasing_siblings() {
-        let mut base = toml::Value::Table(
-            toml::from_str("[assurance]\ntest=true\nclippy=true").unwrap(),
-        );
+        let mut base =
+            toml::Value::Table(toml::from_str("[assurance]\ntest=true\nclippy=true").unwrap());
         let child = toml::Value::Table(toml::from_str("[assurance]\nclippy=false").unwrap());
         merge(&mut base, child);
         assert_eq!(base["assurance"]["test"].as_bool(), Some(true));
