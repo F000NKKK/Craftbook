@@ -5,7 +5,9 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 fn usage() {
-    println!("Usage: cargo craftcheck [check|deps] [--config CraftBook.toml] [--manifest-path Cargo.toml]");
+    println!(
+        "Usage: cargo craftcheck [check|deps] [--config CraftBook.toml] [--manifest-path Cargo.toml]"
+    );
 }
 
 fn check_policy_tree(root: &Path) -> Result<(), String> {
@@ -14,7 +16,8 @@ fn check_policy_tree(root: &Path) -> Result<(), String> {
         let dir = path.parent().ok_or("invalid configuration path")?;
         let merged = cargo_craftcheck::scopes::effective(dir)?
             .ok_or_else(|| format!("no effective policy for {}", path.display()))?;
-        let policy: cargo_craftcheck::Policy = merged.try_into()
+        let policy: cargo_craftcheck::Policy = merged
+            .try_into()
             .map_err(|e| format!("{}: {e}", path.display()))?;
         let findings = cargo_craftcheck::validate(&policy);
         if !findings.is_empty() {
@@ -71,7 +74,10 @@ fn run() -> Result<(), String> {
         None => cargo_craftcheck::scopes::nearest(&cwd)
             .ok_or("CraftBook.toml not found in the current directory or parents")?,
     };
-    if root_config.file_name().is_none_or(|name| name != "CraftBook.toml") {
+    if root_config
+        .file_name()
+        .is_none_or(|name| name != "CraftBook.toml")
+    {
         return Err("--config must point to a CraftBook.toml file".into());
     }
     let root = root_config.parent().ok_or("invalid --config path")?;
