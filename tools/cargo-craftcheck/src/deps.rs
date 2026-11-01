@@ -99,8 +99,8 @@ fn rule_source(directory: &Path, from: &str, disallow: &str) -> Result<(PathBuf,
     for path in crate::scopes::sources(directory).into_iter().rev() {
         let content = std::fs::read_to_string(&path)
             .map_err(|error| format!("{}: {error}", path.display()))?;
-        let table: toml::Table = toml::from_str(&content)
-            .map_err(|error| format!("{}: {error}", path.display()))?;
+        let table: toml::Table =
+            toml::from_str(&content).map_err(|error| format!("{}: {error}", path.display()))?;
         if let Some(rules) = table.get("dependency_rule") {
             let list = rules
                 .as_array()
@@ -131,7 +131,11 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
     }
     let metadata: Metadata = serde_json::from_slice(&output.stdout)
         .map_err(|error| format!("invalid cargo metadata: {error}"))?;
-    let members: HashSet<&str> = metadata.workspace_members.iter().map(String::as_str).collect();
+    let members: HashSet<&str> = metadata
+        .workspace_members
+        .iter()
+        .map(String::as_str)
+        .collect();
     let packages: HashMap<&str, &Package> = metadata
         .packages
         .iter()
@@ -139,7 +143,11 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
         .map(|package| (package.id.as_str(), package))
         .collect();
     let mut violations = Vec::new();
-    for node in metadata.resolve.ok_or("missing resolved dependencies")?.nodes {
+    for node in metadata
+        .resolve
+        .ok_or("missing resolved dependencies")?
+        .nodes
+    {
         let Some(package) = packages.get(node.id.as_str()) else {
             continue;
         };
@@ -175,7 +183,11 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
             }
         }
     }
-    violations.sort_by(|a, b| a.manifest.cmp(&b.manifest).then(a.disallow.cmp(&b.disallow)));
+    violations.sort_by(|a, b| {
+        a.manifest
+            .cmp(&b.manifest)
+            .then(a.disallow.cmp(&b.disallow))
+    });
     violations.dedup_by(|a, b| a.manifest == b.manifest && a.disallow == b.disallow);
     Ok(violations)
 }
