@@ -146,8 +146,7 @@ fn dependency_line(manifest: &Path, package: &str) -> Option<usize> {
                 .trim_start_matches('[')
                 .trim_end_matches(']')
                 .trim()
-                .replace('"', "")
-                .replace('\'', "");
+                .replace(['"', '\''], "");
             if current == format!("{section}.{key}") {
                 return Some(index + 1);
             }
@@ -156,10 +155,10 @@ fn dependency_line(manifest: &Path, package: &str) -> Option<usize> {
         if current != *section {
             continue;
         }
-        if let Some((name, _)) = trimmed.split_once('=') {
-            if name.trim().trim_matches('"').trim_matches('\'') == key {
-                return Some(index + 1);
-            }
+        if let Some((name, _)) = trimmed.split_once('=')
+            && name.trim().trim_matches('"').trim_matches('\'') == key
+        {
+            return Some(index + 1);
         }
     }
     None
