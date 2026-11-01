@@ -76,8 +76,11 @@ pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
     }
     let metadata: Metadata = serde_json::from_slice(&output.stdout)
         .map_err(|e| format!("invalid cargo metadata: {e}"))?;
-    let members: HashSet<&str> =
-        metadata.workspace_members.iter().map(String::as_str).collect();
+    let members: HashSet<&str> = metadata
+        .workspace_members
+        .iter()
+        .map(String::as_str)
+        .collect();
     let packages: HashMap<&str, &Package> = metadata
         .packages
         .iter()
@@ -85,7 +88,10 @@ pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
         .map(|p| (p.id.as_str(), p))
         .collect();
     let mut findings = Vec::new();
-    let nodes = metadata.resolve.ok_or("missing resolved dependencies")?.nodes;
+    let nodes = metadata
+        .resolve
+        .ok_or("missing resolved dependencies")?
+        .nodes;
     for node in nodes {
         let Some(package) = packages.get(node.id.as_str()) else {
             continue;
@@ -96,7 +102,8 @@ pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
         let Some(raw) = crate::scopes::effective(dir)? else {
             continue;
         };
-        let policy: crate::Policy = raw.try_into()
+        let policy: crate::Policy = raw
+            .try_into()
             .map_err(|e| format!("{}: {e}", dir.display()))?;
         let errors = crate::validate(&policy);
         if !errors.is_empty() {
@@ -106,11 +113,17 @@ pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
             let Some(target) = packages.get(edge.pkg.as_str()) else {
                 continue;
             };
-            if policy.dependency_rule.iter().any(|rule| {
-                rule.from == package.name && rule.disallow == target.name
-            }) {
-                findings.push(format!("{}: {} must not depend on {}",
-                    dir.display(), package.name, target.name));
+            if policy
+                .dependency_rule
+                .iter()
+                .any(|rule| rule.from == package.name && rule.disallow == target.name)
+            {
+                findings.push(format!(
+                    "{}: {} must not depend on {}",
+                    dir.display(),
+                    package.name,
+                    target.name
+                ));
             }
         }
     }
@@ -121,9 +134,13 @@ pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
 
 /// Analyze only direct edges between members of the same workspace.
 pub fn check_metadata(input: &str, rules: &[DependencyRule]) -> Result<Vec<String>, String> {
-    let metadata: Metadata = serde_json::from_str(input)
-        .map_err(|err| format!("invalid cargo metadata: {err}"))?;
-    let workspace: HashSet<&str> = metadata.workspace_members.iter().map(String::as_str).collect();
+    let metadata: Metadata =
+        serde_json::from_str(input).map_err(|err| format!("invalid cargo metadata: {err}"))?;
+    let workspace: HashSet<&str> = metadata
+        .workspace_members
+        .iter()
+        .map(String::as_str)
+        .collect();
     let names: HashMap<&str, &str> = metadata
         .packages
         .iter()
@@ -192,10 +209,12 @@ mod tests {
 
     #[test]
     fn requires_resolved_graph() {
-        assert!(check_metadata(
-            r#"{"packages":[],"workspace_members":[],"resolve":null}"#,
-            &[]
-        )
-        .is_err());
+        assert!(
+            check_metadata(
+                r#"{"packages":[],"workspace_members":[],"resolve":null}"#,
+                &[]
+            )
+            .is_err()
+        );
     }
 }
