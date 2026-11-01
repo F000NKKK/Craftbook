@@ -15,8 +15,14 @@ fn run() -> Result<(), String> {
         args.next();
     }
     let command = match args.peek().map(String::as_str) {
-        Some("check") => { args.next(); "check" }
-        Some("deps") => { args.next(); "deps" }
+        Some("check") => {
+            args.next();
+            "check"
+        }
+        Some("deps") => {
+            args.next();
+            "deps"
+        }
         _ => "check",
     };
 
@@ -45,7 +51,8 @@ fn run() -> Result<(), String> {
         if !violations.is_empty() {
             return Err(violations.join("\n"));
         }
-        let violations = cargo_craftcheck::deps::check_workspace(&manifest, &policy.dependency_rule)?;
+        let violations =
+            cargo_craftcheck::deps::check_workspace(&manifest, &policy.dependency_rule)?;
         if !violations.is_empty() {
             return Err(violations.join("\n"));
         }
