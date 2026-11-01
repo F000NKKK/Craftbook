@@ -68,7 +68,7 @@
 
 ## 🚀 Getting started
 
-Read the [principles](#-principles), select a suitable [architecture profile](rust/07-architecture-ddd.md) and use [the example policy](templates/craftbook.toml) as a starting point. No checker is required just to apply the handbook.
+Read the [principles](#-principles), select a suitable [architecture profile](rust/07-architecture-ddd.md) and use [the example policy](templates/CraftBook.toml) as a starting point. No checker is required just to apply the handbook.
 
 For the experimental native Rust policy checker:
 
@@ -76,7 +76,7 @@ For the experimental native Rust policy checker:
 git clone https://github.com/F000NKKK/Craftbook.git
 cd Craftbook
 cargo install --path tools/cargo-craftcheck
-cargo craftcheck check --config templates/craftbook.toml
+cargo craftcheck check --config templates/CraftBook.toml
 ```
 
 The checker validates **policy configuration** and optional direct Cargo Workspace dependency rules; it does not inspect Rust source architecture.
@@ -96,7 +96,7 @@ cargo clippy --all-targets --manifest-path tools/cargo-craftcheck/Cargo.toml -- 
 cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
 ```
 
-Configuration: [project policy](templates/craftbook.toml) · [workspace lints](templates/workspace-lints.toml) · [Clippy](templates/clippy.toml) · [rustfmt](templates/rustfmt.toml) · [CI template](templates/ci.yml).
+Configuration: [project policy](templates/CraftBook.toml) · [workspace lints](templates/workspace-lints.toml) · [Clippy](templates/clippy.toml) · [rustfmt](templates/rustfmt.toml) · [CI template](templates/ci.yml).
 
 ## 🏗️ Architecture
 
@@ -129,4 +129,6 @@ Craftbook is a handbook, not a correctness proof: project requirements, measurem
 
 </div>
 
-The native checker also offers an experimental opt-in dependency rule check: `cargo craftcheck deps --config craftbook.toml --manifest-path Cargo.toml`. It uses Cargo Metadata and checks direct workspace dependencies only.
+The native checker also offers an experimental opt-in dependency rule check: `cargo craftcheck deps --config CraftBook.toml --manifest-path Cargo.toml`. It uses Cargo Metadata and checks direct workspace dependencies only.
+
+Nested `CraftBook.toml` files override parent settings; run `cargo craftcheck check` or `cargo craftcheck deps` from any configured directory to check its subtree. [Configuration details](tools/cargo-craftcheck/README.md#hierarchical-configuration).
