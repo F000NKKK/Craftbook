@@ -141,7 +141,6 @@ mod tests {
         assert_eq!(value["runs"][0]["results"][0]["ruleId"], "CB002");
     }
 
-
     #[test]
     fn sarif_paths_are_relative_to_project_root() {
         let finding = Diagnostic::new(
@@ -150,22 +149,14 @@ mod tests {
             Path::new("/project/crates/alpha/Cargo.toml"),
         )
         .with_rule(Path::new("/project/CraftBook.toml"), 0);
-        let result = render_with_root(
-            Format::Sarif,
-            &[finding],
-            Path::new("/project"),
-        )
-        .unwrap();
+        let result = render_with_root(Format::Sarif, &[finding], Path::new("/project")).unwrap();
         let value: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(
-            value["runs"][0]["results"][0]["locations"][0]["physicalLocation"]
-                ["artifactLocation"]["uri"],
+            value["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["artifactLocation"]
+                ["uri"],
             "crates/alpha/Cargo.toml"
         );
-        assert_eq!(
-            value["runs"][0]["results"][0]["properties"]["ruleIndex"],
-            0
-        );
+        assert_eq!(value["runs"][0]["results"][0]["properties"]["ruleIndex"], 0);
     }
 
     #[test]
