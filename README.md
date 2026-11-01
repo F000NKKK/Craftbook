@@ -79,7 +79,7 @@ cargo install --path tools/cargo-craftcheck
 cargo craftcheck check --config templates/craftbook.toml
 ```
 
-The checker currently validates **policy configuration**, not Rust source architecture or dependency graphs.
+The checker validates **policy configuration** and optional direct Cargo Workspace dependency rules; it does not inspect Rust source architecture.
 
 ## 🛠️ Tooling
 
@@ -87,7 +87,7 @@ The checker currently validates **policy configuration**, not Rust source archit
 |---|---|---|
 | `cargo fmt` | Format Rust sources | Standard tooling |
 | `cargo clippy` | Compiler-aware diagnostics | Standard tooling |
-| [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) | Validate Craftbook v2 policy | Experimental |
+| [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) | Validate v2 policy and opt-in workspace edges | Experimental |
 | [Legacy craftcheck](tools/craftcheck) | Historical v1 checks | Migration only |
 
 ```bash
