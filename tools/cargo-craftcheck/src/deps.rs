@@ -109,45 +109,77 @@ fn table_entry_line(content: &str, header: &str, index: usize) -> Option<usize> 
 fn dependency_line(manifest: &Path, package: &str) -> Option<usize> {
     let content = std::fs::read_to_string(manifest).ok()?;
     let document: toml::Table = toml::from_str(&content).ok()?;
-    // Only claim a source position for an unambiguous key in a dependency table.
-    let mut candidates = Vec::new();
+    let mut matches = Vec::new();
     for section in ["dependencies", "dev-dependencies", "build-dependencies"] {
-        let Some(table) = document.get(section).and_then(toml::Value::as_table) else {
-            continue;
-        };
-        for (key, value) in table {
-            let actual = value
-                .as_table()
-                .and_then(|entry| entry.get("package"))
-                .and_then(toml::Value::as_str)
-                .unwrap_or(key);
-            if actual == package {
-                candidates.push((section, key.as_str()));
+        if let Some(table) = document.get(section).and_then(toml::Value::as_table) {
+            collect_dependencies(table, section.to_owned(), package, &mut matches);
+        }
+    }
+    if let Some(targets) = document.get("target").and_then(toml::Value::as_table) {
+        for (target, value) in targets {
+            let Some(target_table) = value.as_table() else {
+                continue;
+            };
+            for section in ["dependencies", "dev-dependencies", "build-dependencies"] {
+                if let Some(table) = target_table.get(section).and_then(toml::Value::as_table) {
+                    collect_dependencies(
+                        table,
+                        format!("target.{target}.{section}"),
+                        package,
+                        &mut matches,
+                    );
+                }
             }
         }
     }
-    if candidates.len() != 1 {
+    // A dependency can be declared more than once under different targets.
+    // Do not invent a unique line in that case.
+    if matches.len() != 1 {
         return None;
     }
-    let (section, key) = candidates[0];
-    let mut inside = false;
+    let (section, key) = &matches[0];
+    let mut current = String::new();
     for (index, line) in content.lines().enumerate() {
         let trimmed = line.trim();
         if trimmed.starts_with('[') {
-            inside = trimmed == format!("[{section}]");
+            current = trimmed
+                .trim_start_matches('[')
+                .trim_end_matches(']')
+                .trim()
+                .to_owned();
+            if current == format!("{section}.{key}") {
+                return Some(index + 1);
+            }
             continue;
         }
-        if !inside {
+        if current != *section {
             continue;
         }
-        let Some((name, _)) = trimmed.split_once('=') else {
-            continue;
-        };
-        if name.trim().trim_matches('"') == key {
-            return Some(index + 1);
+        if let Some((name, _)) = trimmed.split_once('=') {
+            if name.trim().trim_matches('"').trim_matches('\'') == key {
+                return Some(index + 1);
+            }
         }
     }
     None
+}
+
+fn collect_dependencies(
+    table: &toml::map::Map<String, toml::Value>,
+    section: String,
+    package: &str,
+    matches: &mut Vec<(String, String)>,
+) {
+    for (key, value) in table {
+        let actual = value
+            .as_table()
+            .and_then(|entry| entry.get("package"))
+            .and_then(toml::Value::as_str)
+            .unwrap_or(key);
+        if actual == package {
+            matches.push((section.clone(), key.clone()));
+        }
+    }
 }
 
 fn rule_source(
