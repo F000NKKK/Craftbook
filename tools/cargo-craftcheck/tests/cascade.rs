@@ -63,6 +63,16 @@ fn inherited_dependency_policy_can_be_replaced_locally() {
         sarif_value["runs"][0]["results"][0]["properties"]["ruleIndex"],
         0
     );
+    assert_eq!(
+        sarif_value["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"]
+            ["startLine"],
+        6
+    );
+    assert_eq!(
+        sarif_value["runs"][0]["results"][0]["relatedLocations"][0]["physicalLocation"]["region"]
+            ["startLine"],
+        4
+    );
     assert!(
         sarif_value["runs"][0]["results"][0]["properties"]["configPath"]
             .as_str()
