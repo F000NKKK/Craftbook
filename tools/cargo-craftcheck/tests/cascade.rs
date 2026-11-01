@@ -170,3 +170,36 @@ fn independent_nested_workspace_is_checked_separately() {
     );
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn invalid_nested_toml_produces_structured_diagnostic() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-invalid-toml-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    fs::create_dir_all(&directory).unwrap();
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\nproject = 'fixture'\nprofiles = ['simple']\n",
+    );
+    write(
+        &directory.join("nested/CraftBook.toml"),
+        "profiles = ['simple'\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
+        .args(["check", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let result: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(result["success"], false);
+    assert_eq!(result["diagnostics"][0]["rule_id"], "CB001");
+    assert!(result["diagnostics"][0]["path"]
+        .as_str()
+        .unwrap()
+        .ends_with("nested/CraftBook.toml"));
+    fs::remove_dir_all(&directory).unwrap();
+}
