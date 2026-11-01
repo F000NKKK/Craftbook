@@ -97,89 +97,10 @@ pub struct DependencyViolation {
     pub manifest_line: Option<usize>,
 }
 
-fn table_entry_line(content: &str, header: &str, index: usize) -> Option<usize> {
-    content
-        .lines()
-        .enumerate()
-        .filter(|(_, line)| line.trim().split('#').next().unwrap_or("").trim() == header)
-        .nth(index)
-        .map(|(line, _)| line + 1)
-}
-
 fn dependency_line(manifest: &Path, package: &str) -> Option<usize> {
-    let content = std::fs::read_to_string(manifest).ok()?;
-    let document: toml::Table = toml::from_str(&content).ok()?;
-    let mut matches = Vec::new();
-    for section in ["dependencies", "dev-dependencies", "build-dependencies"] {
-        if let Some(table) = document.get(section).and_then(toml::Value::as_table) {
-            collect_dependencies(table, section.to_owned(), package, &mut matches);
-        }
-    }
-    if let Some(targets) = document.get("target").and_then(toml::Value::as_table) {
-        for (target, value) in targets {
-            let Some(target_table) = value.as_table() else {
-                continue;
-            };
-            for section in ["dependencies", "dev-dependencies", "build-dependencies"] {
-                if let Some(table) = target_table.get(section).and_then(toml::Value::as_table) {
-                    collect_dependencies(
-                        table,
-                        format!("target.{target}.{section}"),
-                        package,
-                        &mut matches,
-                    );
-                }
-            }
-        }
-    }
-    // A dependency can be declared more than once under different targets.
-    // Do not invent a unique line in that case.
-    if matches.len() != 1 {
-        return None;
-    }
-    let (section, key) = &matches[0];
-    let mut current = String::new();
-    for (index, line) in content.lines().enumerate() {
-        let trimmed = line.trim();
-        if trimmed.starts_with('[') {
-            current = trimmed
-                .trim_start_matches('[')
-                .trim_end_matches(']')
-                .trim()
-                .replace(['"', '\''], "");
-            if current == format!("{section}.{key}") {
-                return Some(index + 1);
-            }
-            continue;
-        }
-        if current != *section {
-            continue;
-        }
-        if let Some((name, _)) = trimmed.split_once('=')
-            && name.trim().trim_matches('"').trim_matches('\'') == key
-        {
-            return Some(index + 1);
-        }
-    }
-    None
-}
-
-fn collect_dependencies(
-    table: &toml::map::Map<String, toml::Value>,
-    section: String,
-    package: &str,
-    matches: &mut Vec<(String, String)>,
-) {
-    for (key, value) in table {
-        let actual = value
-            .as_table()
-            .and_then(|entry| entry.get("package"))
-            .and_then(toml::Value::as_str)
-            .unwrap_or(key);
-        if actual == package {
-            matches.push((section.clone(), key.clone()));
-        }
-    }
+    let source = std::fs::read_to_string(manifest).ok()?;
+    let span = crate::toml_locations::dependency_span_in(&source, package)?;
+    span.positions(&source).map(|(start, _)| start.line)
 }
 
 fn rule_source(
@@ -200,7 +121,8 @@ fn rule_source(
                 if entry.get("from").and_then(toml::Value::as_str) == Some(from)
                     && entry.get("disallow").and_then(toml::Value::as_str) == Some(disallow)
                 {
-                    let line = table_entry_line(&content, "[[dependency_rule]]", index);
+                    let line = crate::toml_locations::rule_span(&content, index)
+                        .and_then(|span| span.positions(&content).map(|(start, _)| start.line));
                     return Ok((path, index, line));
                 }
             }
