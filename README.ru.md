@@ -79,7 +79,7 @@ cargo install --path tools/cargo-craftcheck
 cargo craftcheck check --config templates/craftbook.toml
 ```
 
-Пока утилита проверяет **только конфигурацию политики**, но не архитектуру Rust-кода и не граф зависимостей.
+Утилита проверяет **конфигурацию политики** и явно заданные запреты прямых зависимостей Cargo Workspace; архитектуру исходного Rust-кода пока не анализирует.
 
 ## 🛠️ Инструменты
 
@@ -87,7 +87,7 @@ cargo craftcheck check --config templates/craftbook.toml
 |---|---|---|
 | `cargo fmt` | Форматирование Rust | Стандартный инструмент |
 | `cargo clippy` | Диагностика с учётом компилятора | Стандартный инструмент |
-| [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) | Проверка политики Craftbook v2 | Экспериментальный |
+| [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) | Проверка политики и прямых зависимостей | Экспериментальный |
 | [Старый craftcheck](tools/craftcheck) | Исторические правила v1 | Только миграция |
 
 ```bash
