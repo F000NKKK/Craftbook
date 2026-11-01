@@ -95,19 +95,27 @@ pub struct DependencyViolation {
     pub rule_index: usize,
     pub config_line: Option<usize>,
     pub manifest_line: Option<usize>,
+    pub manifest_end: Option<(usize, usize)>,
+    pub config_end: Option<(usize, usize)>,
+}
+
+fn dependency_position(manifest: &Path, package: &str) -> Option<((usize, usize), (usize, usize))> {
+    let source = std::fs::read_to_string(manifest).ok()?;
+    let span = crate::toml_locations::dependency_span_in(&source, package)?;
+    span.positions(&source).map(|(start, end)| {
+        ((start.line, start.column), (end.line, end.column))
+    })
 }
 
 fn dependency_line(manifest: &Path, package: &str) -> Option<usize> {
-    let source = std::fs::read_to_string(manifest).ok()?;
-    let span = crate::toml_locations::dependency_span_in(&source, package)?;
-    span.positions(&source).map(|(start, _)| start.line)
+    dependency_position(manifest, package).map(|(start, _)| start.0)
 }
 
 fn rule_source(
     directory: &Path,
     from: &str,
     disallow: &str,
-) -> Result<(PathBuf, usize, Option<usize>), String> {
+) -> Result<(PathBuf, usize, Option<((usize, usize), (usize, usize))>), String> {
     for path in crate::scopes::sources(directory).into_iter().rev() {
         let content = std::fs::read_to_string(&path)
             .map_err(|error| format!("{}: {error}", path.display()))?;
@@ -121,9 +129,10 @@ fn rule_source(
                 if entry.get("from").and_then(toml::Value::as_str) == Some(from)
                     && entry.get("disallow").and_then(toml::Value::as_str) == Some(disallow)
                 {
-                    let line = crate::toml_locations::rule_span(&content, index)
-                        .and_then(|span| span.positions(&content).map(|(start, _)| start.line));
-                    return Ok((path, index, line));
+                    let position = crate::toml_locations::rule_span(&content, index)
+                        .and_then(|span| span.positions(&content))
+                        .map(|(start, end)| ((start.line, start.column), (end.line, end.column)));
+                    return Ok((path, index, position));
                 }
             }
             break;
@@ -186,16 +195,19 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
                 .iter()
                 .any(|rule| rule.from == package.name && rule.disallow == target.name)
             {
-                let (config, rule_index, config_line) =
+                let (config, rule_index, config_position) =
                     rule_source(directory, &package.name, &target.name)?;
+                let manifest_position = dependency_position(&manifest, &target.name);
                 violations.push(DependencyViolation {
                     from: package.name.clone(),
                     disallow: target.name.clone(),
                     manifest: manifest.clone(),
                     config,
                     rule_index,
-                    config_line,
-                    manifest_line: dependency_line(&manifest, &target.name),
+                    config_line: config_position.map(|(start, _)| start.0),
+                    config_end: config_position.map(|(_, end)| end),
+                    manifest_line: manifest_position.map(|(start, _)| start.0),
+                    manifest_end: manifest_position.map(|(_, end)| end),
                 });
             }
         }
