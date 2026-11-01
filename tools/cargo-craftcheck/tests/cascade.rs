@@ -276,6 +276,9 @@ fn reports_multiple_workspace_edges_with_aliases_and_target_sections() {
     assert_eq!(diagnostics[0]["line"], 6);
     assert_eq!(diagnostics[1]["line"], 8);
     assert_ne!(diagnostics[0]["rule_index"], diagnostics[1]["rule_index"]);
+    assert!(diagnostics.iter().all(|entry| entry["end_line"].as_u64().is_some()));
+    assert!(diagnostics.iter().all(|entry| entry["end_column"].as_u64().is_some()));
+    assert!(diagnostics.iter().all(|entry| entry["config_end_line"].as_u64().is_some()));
 
     let sarif = Command::new(executable)
         .args(["deps", "--format", "sarif"])
