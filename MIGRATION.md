@@ -21,3 +21,7 @@ and nesting limits; unconditional `Send + Sync`; all public types implementing
 required 90%+ coverage and nightly mutation score in every project.
 
 These can still be explicit PROJECT constraints when technically justified.
+
+## Native Rust checker
+
+Install and run `cargo install --path tools/cargo-craftcheck` and `cargo craftcheck check --config craftbook.toml`. This checks v2 policy structure, not source architecture. The old Python checker is explicitly v1 and must not remain a mandatory v2 gate.
