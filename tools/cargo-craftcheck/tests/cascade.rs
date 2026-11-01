@@ -102,3 +102,56 @@ fn inherited_dependency_policy_can_be_replaced_locally() {
     assert!(explain_text.contains("CraftBook.toml"));
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn independent_nested_workspace_is_checked_separately() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-multi-workspace-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    fs::create_dir_all(&directory).unwrap();
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\nproject = 'multi'\nprofiles = ['simple']\n",
+    );
+    write(
+        &directory.join("Cargo.toml"),
+        "[workspace]\nmembers = ['first']\nresolver = '2'\n",
+    );
+    write(
+        &directory.join("first/Cargo.toml"),
+        "[package]\nname = 'first'\nversion = '0.1.0'\nedition = '2024'\n",
+    );
+    write(&directory.join("first/src/lib.rs"), "pub fn first() {}\n");
+    write(
+        &directory.join("isolated/Cargo.toml"),
+        "[workspace]\nmembers = ['second']\nresolver = '2'\n",
+    );
+    write(
+        &directory.join("isolated/second/Cargo.toml"),
+        "[package]\nname = 'second'\nversion = '0.1.0'\nedition = '2024'\n",
+    );
+    write(
+        &directory.join("isolated/second/src/lib.rs"),
+        "pub fn second() {}\n",
+    );
+    write(
+        &directory.join("isolated/CraftBook.toml"),
+        "profiles = ['not-a-valid-profile']\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
+        .args(["check", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let json: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(json["diagnostics"].as_array().unwrap().len(), 1);
+    assert!(json["diagnostics"][0]["path"]
+        .as_str()
+        .unwrap()
+        .ends_with("isolated/CraftBook.toml"));
+    fs::remove_dir_all(&directory).unwrap();
+}
