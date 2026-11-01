@@ -34,7 +34,7 @@ Craftbook v2 changes the **meaning of the standard**, not merely its directory l
 1. **Record current behavior.** Preserve builds, public API guarantees, deployment configuration, known metrics and existing baselines.
 2. **Audit old gates.** Remove unconditional failures based solely on line counts, module depth, naming blacklists, coverage percentages or mandatory DDD layers.
 3. **Choose relevant profiles.** Pick architectural practices that address the actual domain, runtime, hardware, security and performance constraints.
-4. **Create a v2 policy.** Use [the example](templates/craftbook.toml), with a project name and selected profiles. Do not copy v1 layer maps verbatim.
+4. **Create a v2 policy.** Use [the example](templates/CraftBook.toml), with a project name and selected profiles. Do not copy v1 layer maps verbatim.
 5. **Keep useful checks.** Continue to run rustfmt, rustc, Clippy, relevant tests and compatibility or security checks.
 6. **Migrate incrementally.** Preserve useful aggregates, ports and adapters; rewrite only where a real deficiency has been identified. Include regression and contract tests for behavior changes.
 7. **Document decisions.** Record significant API, transaction, dependency, data-format and performance decisions in ADRs or project documentation.
@@ -48,7 +48,7 @@ The new experimental Rust utility validates the v2 configuration:
 
 ```bash
 cargo install --path tools/cargo-craftcheck
-cargo craftcheck check --config templates/craftbook.toml
+cargo craftcheck check --config templates/CraftBook.toml
 ```
 
 It **does not yet validate Rust source architecture or Cargo dependency graphs**. The old `tools/craftcheck` remains available to compare existing v1 findings, but its output is not a mandatory gate for v2.
