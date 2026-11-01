@@ -28,16 +28,24 @@ pub fn merge(parent: &mut toml::Value, child: toml::Value) {
     }
 }
 
+
+/// Explain which configuration files contribute to a directory's policy,
+/// ordered from the least specific ancestor to the most specific one.
+pub fn sources(dir: &Path) -> Vec<PathBuf> {
+    let mut paths: Vec<_> = dir
+        .ancestors()
+        .map(|ancestor| ancestor.join("CraftBook.toml"))
+        .filter(|path| path.is_file())
+        .collect();
+    paths.reverse();
+    paths
+}
+
 /// Resolve all policies from filesystem root to the requested directory.
 pub fn effective(dir: &Path) -> Result<Option<toml::Value>, String> {
-    let mut chain: Vec<_> = dir.ancestors().collect();
-    chain.reverse();
+    let chain = sources(dir);
     let mut merged: Option<toml::Value> = None;
-    for directory in chain {
-        let path = directory.join("CraftBook.toml");
-        if !path.is_file() {
-            continue;
-        }
+    for path in chain {
         let raw = fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
         let value = toml::from_str::<toml::Table>(&raw)
             .map(toml::Value::Table)
@@ -115,6 +123,7 @@ mod tests {
         assert_eq!(merged["assurance"]["format"].as_bool(), Some(true));
         assert_eq!(merged["assurance"]["test"].as_bool(), Some(false));
         assert_eq!(discover(&root, "CraftBook.toml").unwrap().len(), 2);
+        assert_eq!(sources(&nested), vec![root.join("CraftBook.toml"), nested.join("CraftBook.toml")]);
 
         fs::remove_dir_all(&root).unwrap();
     }
