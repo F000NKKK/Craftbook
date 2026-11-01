@@ -88,7 +88,6 @@ cargo craftcheck check --config templates/CraftBook.toml
 | `cargo fmt` | Форматирование Rust | Стандартный инструмент |
 | `cargo clippy` | Диагностика с учётом компилятора | Стандартный инструмент |
 | [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) | Проверка политики и прямых зависимостей | Экспериментальный |
-| [Старый craftcheck](tools/craftcheck) | Исторические правила v1 | Только миграция |
 
 ```bash
 cargo fmt --all --check --manifest-path tools/cargo-craftcheck/Cargo.toml
@@ -96,7 +95,7 @@ cargo clippy --all-targets --manifest-path tools/cargo-craftcheck/Cargo.toml -- 
 cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
 ```
 
-Конфигурации: [политика проекта](templates/CraftBook.toml) · [правила workspace](templates/workspace-lints.toml) · [Clippy](templates/clippy.toml) · [rustfmt](templates/rustfmt.toml) · [шаблон CI](templates/ci.yml).
+Конфигурации: [политика самого Craftbook](CraftBook.toml) · [пример политики](templates/CraftBook.toml) · [правила workspace](templates/workspace-lints.toml) · [Clippy](templates/clippy.toml) · [rustfmt](templates/rustfmt.toml) · [шаблон CI](templates/ci.yml).
 
 ## 🏗️ Архитектура
 
@@ -117,7 +116,7 @@ Craftbook подбирается под задачу, а не требует о�
 
 Craftbook v2 развивается вместе с реальными Rust-проектами. Изменения глав должны соответствовать примерам и поведению инструментов. Для нативной утилиты есть [отдельный CI](.github/workflows/craftbook-v2.yml); наличие workflow само по себе не означает успешное выполнение.
 
-Переходишь с v1? Используй [руководство по миграции](MIGRATION.ru.md) ([English](MIGRATION.md)). Старые проверки Python не обязательны для v2.
+Переходишь с v1? Используй [руководство по миграции](MIGRATION.ru.md) ([English](MIGRATION.md)). Python-инструменты v1 удалены из `main`; они доступны через теги `v1` и `v2-rc0`.
 
 Craftbook — инженерный справочник, а не формальное доказательство корректности: требования проекта, измерения и ревью остаются необходимыми.
 
