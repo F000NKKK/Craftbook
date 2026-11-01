@@ -95,8 +95,8 @@ fn run() -> Result<(), String> {
         } else {
             root
         };
-        let merged = cargo_craftcheck::scopes::effective(target)?
-            .ok_or("no CraftBook.toml found")?;
+        let merged =
+            cargo_craftcheck::scopes::effective(target)?.ok_or("no CraftBook.toml found")?;
         let policy: cargo_craftcheck::Policy = merged
             .clone()
             .try_into()
