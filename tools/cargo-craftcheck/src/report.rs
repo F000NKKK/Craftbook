@@ -76,6 +76,19 @@ fn sarif_uri(path: &str, root: &Path) -> String {
     relative.to_string_lossy().replace('\\', "/")
 }
 
+fn physical_location(path: &str, root: &Path, line: Option<usize>, column: usize) -> serde_json::Value {
+    let mut location = serde_json::json!({
+        "artifactLocation": {"uri": sarif_uri(path, root)}
+    });
+    if let Some(line) = line {
+        location["region"] = serde_json::json!({
+            "startLine": line,
+            "startColumn": column
+        });
+    }
+    location
+}
+
 pub fn render(format: Format, findings: &[Diagnostic]) -> Result<String, String> {
     render_with_root(format, findings, Path::new("."))
 }
@@ -115,22 +128,15 @@ pub fn render_with_root(
                         "relatedLocations": item.config_path.as_ref().map(|config| {
                             vec![serde_json::json!({
                                 "id": 1,
-                                "physicalLocation": {
-                                    "artifactLocation": {"uri": sarif_uri(config, root)},
-                                    "region": item.config_line.map(|line| serde_json::json!({
-                                        "startLine": line,
-                                        "startColumn": 1
-                                    }))
-                                }
+                                "physicalLocation": physical_location(config, root, item.config_line, 1)
                             })]
                         }).unwrap_or_default(),
-                        "locations": [{"physicalLocation": {
-                            "artifactLocation": {"uri": sarif_uri(&item.path, root)},
-                            "region": item.line.map(|line| serde_json::json!({
-                                "startLine": line,
-                                "startColumn": item.column.unwrap_or(1)
-                            }))
-                        }}]
+                        "locations": [{"physicalLocation": physical_location(
+                            &item.path,
+                            root,
+                            item.line,
+                            item.column.unwrap_or(1)
+                        )}]
                     })
                 })
                 .collect();
