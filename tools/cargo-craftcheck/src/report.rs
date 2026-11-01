@@ -231,6 +231,21 @@ mod tests {
     }
 
     #[test]
+    fn source_span_renders_start_and_end_in_sarif() {
+        let source = "αb\r\nxyz";
+        let span = crate::source::SourceSpan::new(5, 8, source).unwrap();
+        let finding = Diagnostic::new("CB001", "invalid", Path::new("CraftBook.toml"))
+            .with_span(source, &span);
+        let output = render(Format::Sarif, &[finding]).unwrap();
+        let value: serde_json::Value = serde_json::from_str(&output).unwrap();
+        let region = &value["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"];
+        assert_eq!(region["startLine"], 2);
+        assert_eq!(region["startColumn"], 1);
+        assert_eq!(region["endLine"], 2);
+        assert_eq!(region["endColumn"], 4);
+    }
+
+    #[test]
     fn unknown_format_is_rejected() {
         assert!(Format::parse("xml").is_err());
     }
