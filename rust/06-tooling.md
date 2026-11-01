@@ -17,3 +17,7 @@ A hard CI gate needs a demonstrable correctness, security, compatibility or decl
 ## Native Cargo subcommand
 
 The experimental [`cargo-craftcheck`](../tools/cargo-craftcheck/README.md) implements v2 policy validation in Rust, independently of Python. Its automated tests are in the [v2 CI workflow](../.github/workflows/craftbook-v2.yml). Further dependency and source checks require explicit rules and suitable parsers; the first version does not claim to provide them.
+
+### Dependency policies (experimental)
+
+`cargo craftcheck deps --config craftbook.toml --manifest-path Cargo.toml` checks optional `[[dependency_rule]]` entries against direct workspace dependencies resolved by Cargo Metadata. Each entry supplies `from` and `disallow` package names. No dependency direction is imposed unless the project specifies it. The current output is human-readable; it is not yet JSON or SARIF.
