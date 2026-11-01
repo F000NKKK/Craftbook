@@ -43,6 +43,24 @@ pub struct DependencyRule {
     pub disallow: String,
 }
 
+/// Get the Cargo workspace root for a manifest, without resolving dependencies.
+pub fn workspace_root(manifest: &Path) -> Result<String, String> {
+    let output = Command::new("cargo")
+        .args(["metadata", "--no-deps", "--format-version", "1", "--manifest-path"])
+        .arg(manifest)
+        .output()
+        .map_err(|error| error.to_string())?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).into_owned());
+    }
+    let value: serde_json::Value =
+        serde_json::from_slice(&output.stdout).map_err(|error| error.to_string())?;
+    value["workspace_root"]
+        .as_str()
+        .map(str::to_owned)
+        .ok_or_else(|| "missing Cargo workspace root".to_owned())
+}
+
 /// Obtain the resolved dependency graph from Cargo.
 pub fn check_workspace(path: &Path, rules: &[DependencyRule]) -> Result<Vec<String>, String> {
     let output = Command::new("cargo")
