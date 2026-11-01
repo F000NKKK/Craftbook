@@ -25,7 +25,19 @@ fn check_policy_tree(root: &Path, verbose: bool) -> Result<Vec<Diagnostic>, Stri
                 continue;
             }
             Err(error) => {
-                findings.push(Diagnostic::new("CB001", error, &path));
+                let mut diagnostic = Diagnostic::new("CB001", error, &path);
+                if let Ok(source) = std::fs::read_to_string(&path)
+                    && let Err(parse_error) = toml::from_str::<toml::Table>(&source)
+                    && let Some(range) = parse_error.span()
+                    && let Some(span) = cargo_craftcheck::source::SourceSpan::new(
+                        range.start,
+                        range.end,
+                        &source,
+                    )
+                {
+                    diagnostic = diagnostic.with_span(&source, &span);
+                }
+                findings.push(diagnostic);
                 continue;
             }
         };
