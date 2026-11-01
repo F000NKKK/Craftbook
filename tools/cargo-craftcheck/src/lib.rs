@@ -7,6 +7,8 @@ use std::path::Path;
 
 use serde::Deserialize;
 
+pub mod deps;
+
 const PROFILES: &[&str] = &[
     "simple",
     "layered",
@@ -34,6 +36,8 @@ pub struct Policy {
     pub assurance: Assurance,
     #[serde(default)]
     pub constraints: Constraints,
+    #[serde(default)]
+    pub dependency_rule: Vec<deps::DependencyRule>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -82,6 +86,11 @@ pub fn validate(policy: &Policy) -> Vec<String> {
         }
         if !seen.insert(profile) {
             errors.push(format!("duplicate profile: {profile}"));
+        }
+    }
+    for rule in &policy.dependency_rule {
+        if rule.from.trim().is_empty() || rule.disallow.trim().is_empty() {
+            errors.push("dependency rules require nonempty from and disallow".to_owned());
         }
     }
     errors
