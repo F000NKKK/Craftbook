@@ -119,16 +119,22 @@ fn dependency_line(manifest: &Path, package: &str) -> Option<usize> {
                 || trimmed.ends_with(".dev-dependencies]")
                 || trimmed.ends_with(".build-dependencies]");
         } else if in_dependencies {
-            let key = trimmed.split_once('=')?.0.trim().trim_matches('"').trim_matches('\'');
-            if key == package {
-                return Some(index + 1);
+            if let Some((key, _)) = trimmed.split_once('=') {
+                let key = key.trim().trim_matches('"').trim_matches('\'');
+                if key == package {
+                    return Some(index + 1);
+                }
             }
         }
     }
     None
 }
 
-fn rule_source(directory: &Path, from: &str, disallow: &str) -> Result<(PathBuf, usize, Option<usize>), String> {
+fn rule_source(
+    directory: &Path,
+    from: &str,
+    disallow: &str,
+) -> Result<(PathBuf, usize, Option<usize>), String> {
     for path in crate::scopes::sources(directory).into_iter().rev() {
         let content = std::fs::read_to_string(&path)
             .map_err(|error| format!("{}: {error}", path.display()))?;
