@@ -1,13 +1,4 @@
-# Craftbook rustfmt settings (stable options only).
+# Craftbook v2 optional rustfmt conventions. rustfmt is authoritative.
 edition = "2024"
 style_edition = "2024"
 max_width = 100
-newline_style = "Unix"
-use_field_init_shorthand = true
-use_try_shorthand = true
-
-# Nightly-only, enforced by the optional `cargo +nightly fmt --check` CI job:
-# group_imports = "StdExternalCrate"
-# imports_granularity = "Module"
-# wrap_comments = true
-# comment_width = 100
