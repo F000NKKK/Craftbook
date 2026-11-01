@@ -133,3 +133,5 @@ Craftbook — инженерный справочник, а не формаль�
 Файлы `CraftBook.toml` можно размещать во вложенных папках: локальные настройки переопределяют родительские. Команды `cargo craftcheck check` и `cargo craftcheck deps` запускаются из любой настроенной директории и проверяют её поддерево. [Подробнее](tools/cargo-craftcheck/README.md#hierarchical-configuration).
 
 Посмотреть объединённую политику можно командой `cargo craftcheck config`, а источники наследования — `cargo craftcheck explain`. Эти команды работают с текущим каталогом, не обходя соседние проекты.
+
+Машинно-читаемая диагностика: `cargo craftcheck check --format json` и `cargo craftcheck deps --format sarif` (SARIF 2.1.0). [Описание](tools/cargo-craftcheck/README.md#structured-diagnostics).
