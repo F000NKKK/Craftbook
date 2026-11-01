@@ -1,5 +1,6 @@
 //! Cargo subcommand entry point: cargo craftcheck [check|deps].
 
+use std::collections::HashSet;
 use std::env;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -140,7 +141,18 @@ fn run() -> Result<(), String> {
         if manifests.is_empty() {
             return Err(format!("no Cargo.toml found below {}", root.display()));
         }
+        let mut seen_workspaces = HashSet::new();
         for path in manifests {
+            let workspace_root = match cargo_craftcheck::deps::workspace_root(&path) {
+                Ok(root) => root,
+                Err(error) => {
+                    diagnostics.push(Diagnostic::new("CB003", error, &path));
+                    continue;
+                }
+            };
+            if !seen_workspaces.insert(workspace_root) {
+                continue;
+            }
             match cargo_craftcheck::deps::check_workspace_scoped(&path) {
                 Ok(errors) => {
                     for message in errors {
