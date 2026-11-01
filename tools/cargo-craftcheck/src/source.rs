@@ -16,7 +16,8 @@ pub struct SourceSpan {
 
 impl SourceSpan {
     pub fn new(start: usize, end: usize, source: &str) -> Option<Self> {
-        if start > end || end > source.len()
+        if start > end
+            || end > source.len()
             || !source.is_char_boundary(start)
             || !source.is_char_boundary(end)
         {
