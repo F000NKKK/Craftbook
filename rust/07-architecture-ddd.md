@@ -1,271 +1,42 @@
-# 7. Architecture: domain-driven design
+# 7. Architecture is a project decision
 
-We use DDD in both of its halves. **Strategic** design decides how the system
-is cut into crates and who may depend on whom; it applies to everything.
-**Tactical** design (entities, value objects, aggregates, ports) decides how
-code inside a domain is shaped; it applies to domain and application code,
-with one documented exception for performance kernels (§7.8).
+No single architecture fits libraries, backends, operating systems, games, embedded systems and scientific workloads. State invariants, ownership, performance and failure modes first; choose patterns afterward.
 
-## 7.1 Ubiquitous language
+## Profiles
 
-Every bounded context has a glossary section in `docs/glossary.md`:
-
-```markdown
-## Physics
-
-| Term | Meaning | In code |
+| Profile | Typical use | Principal tools |
 |---|---|---|
-| Rigid body | A body whose shape does not deform; has mass, pose and velocity. | `RigidBody` |
-| Contact | A pair of bodies whose shapes overlap this step, with normal and depth. | `Contact` |
-| Step | One fixed-length advance of the simulation. | `World::step` |
-```
+| Simple or layered | CLI, CRUD, small applications | modules and functions |
+| DDD | complex business language and invariants | bounded contexts, value objects, aggregates |
+| Hexagonal | substitutable external systems | ports, adapters and composition |
+| Clean architecture | policies independent of volatile details | dependency inversion |
+| CQRS / event sourcing | distinct read models, audit or replay | commands, projections, versioned events |
+| Actor / messaging | concurrent independent components | ownership transfer, bounded mailboxes, supervision |
+| Systems / embedded | kernels, drivers, firmware | RAII, unsafe contracts, typestate |
+| Performance / data-oriented | engines, ECS, math and analytics | slices, SoA, arenas, SIMD and benchmarks |
+| Functional core | reproducible computations | pure transformations and explicit effects |
+| Plugin | extensible programs | stable contracts, ABI boundaries and feature negotiation |
 
-- The code uses the glossary's words, the glossary uses the code's words.
-  Renaming either renames both, in one PR.
-- One term, one meaning, inside a context. The same word may mean different
-  things in two contexts (a *mesh* in graphics vs. physics); then each context
-  has its own type, and a translation at the boundary (§7.6).
-- A term that appears in more than one context with the same meaning belongs
-  to a **shared kernel** crate.
+Profiles may be combined. No profile mandates a particular directory layout.
 
-## 7.2 Bounded contexts and the context map
+## DDD (optional)
 
-- A **bounded context** is a part of the domain with its own model and
-  language: *physics*, *rendering*, *audio*, *assets*, *source control*,
-  *search*, *terminal*.
-- Each bounded context is **one domain crate** (plus its application and
-  adapter crates). A crate never holds two contexts; a context never spreads
-  over two domain crates.
-- `docs/context-map.md` lists the contexts and the relation between each pair
-  that talks: **shared kernel** (both depend on a small common crate),
-  **customer–supplier** (downstream depends on upstream's published API),
-  **anticorruption layer** (downstream translates upstream's model into its
-  own), **published language** (a documented data format both sides speak).
-  Every context may use shared-kernel crates; any other dependency across
-  contexts needs a listed relation, or it is not allowed.
+Strategic DDD defines bounded contexts, ubiquitous language and context relationships. **A bounded context does not imply exactly one crate.** Multiple contexts may share a crate with explicit module boundaries, and one context can span crates.
 
-## 7.3 Layers
+Tactical DDD defines entities by identity, value objects by value, aggregates by consistency boundaries, domain services and events. Enforce relevant invariants, but do not apply aggregates to every data structure. One aggregate per transaction is not a universal rule: transaction boundaries follow domain consistency needs.
 
-Inside each context the dependency rule points inwards: outer layers depend on
-inner ones, never the reverse.
+Repositories and domain events exist only when they solve persistence or integration needs. A domain operation may be a free function, struct method or service depending on state and responsibilities.
 
-```text
- interface   ──►  application  ──►  domain  ◄──  infrastructure
- (CLI, Tauri,      (use cases,       (model,       (adapters: wgpu,
-  examples,         ports for I/O,    rules,        git CLI, fs, OS,
-  host apps)        orchestration)    ports)        audio device)
-                         ▲                                │
-                         └──── implements ports of ───────┘
-```
+## Hexagonal and Clean (optional)
 
-| Layer | Contains | May depend on | Must not contain | Crate name suffix |
-|---|---|---|---|---|
-| **Shared kernel** | value types used by several contexts: math, ids, units, color | `std`, `core`, small pure crates (`serde` behind a feature) | I/O, `async`, domain rules of one context | none: `<product>-<concept>` |
-| **Domain** | entities, value objects, aggregates, domain services, domain events, synchronous ports with no I/O (clock, id source, random) | shared kernel; another context's domain only as a listed customer–supplier or shared-kernel relation | I/O, `async`, `tokio`, GPU/OS/file APIs, logging back ends, serialization formats | `-domain` |
-| **Application** | use cases (one per command), port traits for I/O (repositories, devices, processes), transactions, scheduling, cross-context orchestration | domain crates, shared kernel; another context's app crate if the edge is listed | business rules (they go into the domain), concrete technology | `-app` |
-| **Infrastructure** | adapters implementing ports: GPU, audio device, file system, process, `git` executable, persistence | the ports it implements (domain/app), the technology crate; another adapter of the same context (a shared `-os` helper) | business rules, decisions the domain should make | `-<technology>`: `-wgpu`, `-cpal`, `-gitcli`, `-fs` |
-| **Interface** | composition root: wires adapters into use cases; CLI, Tauri commands, examples, binaries | everything above | business rules | `-cli`, `-tauri`, product name for the app |
+Ports can be traits, function parameters or message contracts. Introduce a port when an external dependency needs isolation, test substitution or stability—not as a mandatory wrapper for every file operation. Async I/O ports are valid; consider object safety and dispatch costs. Compose concrete adapters at a suitable boundary.
 
-Rules:
+Avoid copying C# `IService -> Service -> IRepository -> Repository` layers without domain justification.
 
-- **The inner layer owns its ports.** What the model needs from outside is
-  a trait declared by the layer that needs it: I/O ports (a mesh upload, a
-  repository, a process run, an audio sink) by the **application** crate, so
-  they may be `async` (chapter 4 §4.8); I/O-free ports (a clock, an id
-  source, a random source) by the **domain**, synchronous. The adapter crate
-  depends on that crate and implements the trait. Domain and application
-  never depend on a driver.
-- **Composition happens once,** in the interface layer (the composition
-  root): the only place that names concrete adapters.
-- **No layer skipping** in the other direction: interface code calls use cases,
-  not adapters directly, except for wiring them up.
-- **Cross-context calls go through the application layer** or through a
-  published API of the upstream domain listed in the context map. A domain
-  crate depends on another context's domain crate only through a listed
-  customer–supplier or shared-kernel relation.
-- Layers and allowed edges are declared in `craftbook.toml` and checked by
-  `craftcheck deps` on every PR.
+## Systems and high performance
 
-## 7.4 Tactical building blocks in Rust
+Kernels, device drivers, graphics engines and embedded code emphasize memory ownership, deterministic lifetime, target constraints, safe unsafe-boundaries and layout. Data-oriented internals are not violations of DDD because DDD need not apply. Measure before imposing an abstraction on hot paths.
 
-### Value object
+## Decisions
 
-Immutable, compared by value, valid by construction.
-
-```rust
-/// Mass of a body, in kilograms. Always finite and positive.
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub struct Mass(f32);
-
-impl Mass {
-    /// Creates a mass of `kilograms`.
-    ///
-    /// # Errors
-    ///
-    /// [`MassError::NotFinite`] for NaN or infinity,
-    /// [`MassError::NotPositive`] for zero or a negative value.
-    pub fn new(kilograms: f32) -> Result<Self, MassError> {
-        if !kilograms.is_finite() {
-            return Err(MassError::NotFinite { kilograms });
-        }
-        if kilograms <= 0.0 {
-            return Err(MassError::NotPositive { kilograms });
-        }
-        Ok(Self(kilograms))
-    }
-
-    /// The mass in kilograms.
-    #[must_use]
-    pub fn kilograms(self) -> f32 {
-        self.0
-    }
-}
-```
-
-- Private fields, `new`/`try_*` validates, no setters: "changing" returns a
-  new value (`with_*`).
-- Most of the domain should be value objects. They are cheap to test and
-  cannot be in an invalid state.
-
-### Entity
-
-Has identity that survives changes of its attributes. Identity is a typed id.
-
-```rust
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct BodyId(u32);
-
-#[derive(Debug)]
-pub struct RigidBody {
-    id: BodyId,
-    mass: Mass,
-    pose: Motor,
-    velocity: Velocity,
-}
-```
-
-- Equality of entities is by id only; do not derive `PartialEq` over all
-  fields.
-- Fields private; behaviour as methods that keep invariants.
-
-### Aggregate
-
-A cluster of entities and value objects changed as one unit, behind one
-**root**. Outside code holds the root (or its id) and calls its methods; it
-never reaches inside to mutate a member.
-
-- One aggregate per transaction/step: a command changes one aggregate.
-  Coordination between aggregates is a domain service or the application
-  layer, possibly through domain events.
-- Aggregates refer to other aggregates **by id**, never by reference or
-  `Arc`.
-- Keep aggregates small. If the root's `impl` exceeds the limits of chapter 2,
-  the aggregate boundary is wrong.
-
-### Domain service
-
-A stateless operation that does not belong to one entity or value object:
-**a free function** in a module named after the concept
-(`collision::intersect(a, b)`, `pricing::quote(order, tariff)`). See
-[chapter 2 §2.3](02-functions.md#23-method-associated-function-free-function-or-trait).
-
-### Domain event
-
-Something that happened, in the past tense, as data:
-
-```rust
-#[derive(Debug, Clone, PartialEq)]
-pub enum PhysicsEvent {
-    BodiesCollided { a: BodyId, b: BodyId, impulse: Impulse },
-    BodyFellAsleep { body: BodyId },
-}
-```
-
-- Aggregates return or push events; they do not call other aggregates.
-- Events are values (no handles to live objects) so they can be logged,
-  replayed and sent across threads.
-
-### Repository and other ports
-
-A trait describing what the model needs, in the model's words; declared by
-the application crate when it does I/O (§7.3):
-
-```rust
-/// Where meshes live once they are uploaded for drawing.
-pub trait MeshStore {
-    /// Uploads `mesh` and returns the id it is drawn by.
-    ///
-    /// # Errors
-    ///
-    /// [`MeshStoreError`] when the device refuses the upload.
-    fn upload(&mut self, mesh: &Mesh) -> Result<MeshId, MeshStoreError>;
-    /// Frees the mesh; unknown ids are ignored.
-    fn release(&mut self, id: MeshId);
-}
-```
-
-- Ports are small (≤ 5 methods) and named by role (`Clock`, `MeshStore`,
-  `ProcessRunner`), not by technology.
-- Every port has at least one real adapter and one fake (`InMemoryMeshStore`)
-  used by domain and application tests.
-
-### Factory
-
-Complex creation is an associated function on the root
-(`World::with_gravity(g)`) or a builder (`WorldBuilder`). A separate
-`…Factory` type exists only when creation needs injected ports.
-
-### Use case (application service)
-
-One function or one small struct per command, named after the command:
-
-```rust
-pub fn open_project(fs: &impl FileSystem, path: &ProjectPath) -> Result<Project, OpenProjectError> { … }
-```
-
-The use case loads what it needs through ports, calls the domain, saves
-through ports, and emits events. It contains no rule that the domain could
-own.
-
-## 7.5 What may cross a layer boundary
-
-- Into the domain: domain types, shared-kernel types, primitives. Never a
-  driver object, a file path string meant for the OS, a JSON value.
-- Out of the domain: domain types and events. The interface layer maps them to
-  DTOs (`serde` structs) for the UI or the wire.
-- `serde` derives live on DTOs in the interface/infrastructure layer, or
-  behind a `serde` feature on shared-kernel value types. Domain types are not
-  shaped by a file format.
-
-## 7.6 Anticorruption layers
-
-When a context consumes a foreign model (a third-party crate, another
-context's data, a file format, `git`'s porcelain output), the translation
-lives in one adapter module that turns the foreign shape into our types. No
-foreign type appears in a domain signature.
-
-## 7.7 No managers, no hubs
-
-- No type whose job is "holds everything" (`Engine`, `Context`, `App` with
-  forty fields reached from everywhere). The composition root builds the
-  graph of values once and passes each one what it needs.
-- No crate that every other crate depends on except the shared kernel, and
-  the kernel stays small (types, not services).
-
-## 7.8 Performance kernels
-
-Hot paths of an engine (ECS storage, SIMD math, physics solvers, GPU kernels
-and the buffers they read) are allowed a data-oriented shape that tactical DDD
-would not produce: structure-of-arrays storage, plain-old-data `#[repr(C)]`
-structs with public fields, index-based access, free functions over slices.
-
-The conditions:
-
-1. The crate declares itself a performance kernel in its `//!` doc and in
-   `craftbook.toml` (`profile = "perf"`, which turns off craftcheck C108 and
-   A502 for it).
-2. It is still placed in the correct layer, follows naming, file and
-   function limits, and has its own tests and benchmarks.
-3. It exposes a typed, validated API to the rest of the domain (value objects
-   and ids), so the data-oriented layout stays an internal detail.
-4. The decision has a benchmark that justifies it.
+Document selected profiles, invariants, dependency contracts, alternatives and revision triggers. Boundaries can be module-level, crate-level, process-level or protocol-level according to actual requirements.
