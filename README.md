@@ -88,7 +88,6 @@ The checker validates **policy configuration** and optional direct Cargo Workspa
 | `cargo fmt` | Format Rust sources | Standard tooling |
 | `cargo clippy` | Compiler-aware diagnostics | Standard tooling |
 | [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) | Validate v2 policy and opt-in workspace edges | Experimental |
-| [Legacy craftcheck](tools/craftcheck) | Historical v1 checks | Migration only |
 
 ```bash
 cargo fmt --all --check --manifest-path tools/cargo-craftcheck/Cargo.toml
@@ -96,7 +95,7 @@ cargo clippy --all-targets --manifest-path tools/cargo-craftcheck/Cargo.toml -- 
 cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
 ```
 
-Configuration: [project policy](templates/CraftBook.toml) · [workspace lints](templates/workspace-lints.toml) · [Clippy](templates/clippy.toml) · [rustfmt](templates/rustfmt.toml) · [CI template](templates/ci.yml).
+Configuration: [Craftbook's own policy](CraftBook.toml) · [example policy](templates/CraftBook.toml) · [workspace lints](templates/workspace-lints.toml) · [Clippy](templates/clippy.toml) · [rustfmt](templates/rustfmt.toml) · [CI template](templates/ci.yml).
 
 ## 🏗️ Architecture
 
@@ -117,7 +116,7 @@ Choose combinations based on invariants and tradeoffs. See [architecture guidanc
 
 Craftbook v2 evolves alongside real Rust code. Review chapter updates together with examples and tool behavior. The native checker has a [dedicated CI workflow](.github/workflows/craftbook-v2.yml); its successful execution is not implied by the existence of the workflow.
 
-Moving from v1? Read the [migration guide](MIGRATION.md) ([на русском](MIGRATION.ru.md)). Old Python rules are intentionally not mandatory for v2.
+Moving from v1? Read the [migration guide](MIGRATION.md) ([на русском](MIGRATION.ru.md)). The Python v1 tools have been removed from `main`; retrieve them from the `v1` or `v2-rc0` tags.
 
 Craftbook is a handbook, not a correctness proof: project requirements, measurements and code review still matter.
 
