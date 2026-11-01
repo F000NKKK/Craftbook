@@ -69,5 +69,14 @@ fn inherited_dependency_policy_can_be_replaced_locally() {
         String::from_utf8_lossy(&second.stderr)
     );
     assert!(run(&["check"]).status.success());
+    let config = run(&["config"]);
+    assert!(config.status.success());
+    let config_text = String::from_utf8_lossy(&config.stdout);
+    assert!(config_text.contains("project = \"fixture\""));
+    let explain = run(&["explain"]);
+    assert!(explain.status.success());
+    let explain_text = String::from_utf8_lossy(&explain.stdout);
+    assert!(explain_text.contains("Configuration sources"));
+    assert!(explain_text.contains("CraftBook.toml"));
     fs::remove_dir_all(&directory).unwrap();
 }
