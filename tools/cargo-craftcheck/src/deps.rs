@@ -93,9 +93,42 @@ pub struct DependencyViolation {
     pub manifest: PathBuf,
     pub config: PathBuf,
     pub rule_index: usize,
+    pub config_line: Option<usize>,
+    pub manifest_line: Option<usize>,
 }
 
-fn rule_source(directory: &Path, from: &str, disallow: &str) -> Result<(PathBuf, usize), String> {
+fn table_entry_line(content: &str, header: &str, index: usize) -> Option<usize> {
+    content
+        .lines()
+        .enumerate()
+        .filter(|(_, line)| line.trim().split('#').next().unwrap_or("").trim() == header)
+        .nth(index)
+        .map(|(line, _)| line + 1)
+}
+
+fn dependency_line(manifest: &Path, package: &str) -> Option<usize> {
+    let content = std::fs::read_to_string(manifest).ok()?;
+    let mut in_dependencies = false;
+    for (index, line) in content.lines().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') {
+            in_dependencies = trimmed == "[dependencies]"
+                || trimmed == "[dev-dependencies]"
+                || trimmed == "[build-dependencies]"
+                || trimmed.ends_with(".dependencies]")
+                || trimmed.ends_with(".dev-dependencies]")
+                || trimmed.ends_with(".build-dependencies]");
+        } else if in_dependencies {
+            let key = trimmed.split_once('=')?.0.trim().trim_matches('"').trim_matches('\'');
+            if key == package {
+                return Some(index + 1);
+            }
+        }
+    }
+    None
+}
+
+fn rule_source(directory: &Path, from: &str, disallow: &str) -> Result<(PathBuf, usize, Option<usize>), String> {
     for path in crate::scopes::sources(directory).into_iter().rev() {
         let content = std::fs::read_to_string(&path)
             .map_err(|error| format!("{}: {error}", path.display()))?;
@@ -109,7 +142,8 @@ fn rule_source(directory: &Path, from: &str, disallow: &str) -> Result<(PathBuf,
                 if entry.get("from").and_then(toml::Value::as_str) == Some(from)
                     && entry.get("disallow").and_then(toml::Value::as_str) == Some(disallow)
                 {
-                    return Ok((path, index));
+                    let line = table_entry_line(&content, "[[dependency_rule]]", index);
+                    return Ok((path, index, line));
                 }
             }
             break;
@@ -172,13 +206,16 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
                 .iter()
                 .any(|rule| rule.from == package.name && rule.disallow == target.name)
             {
-                let (config, rule_index) = rule_source(directory, &package.name, &target.name)?;
+                let (config, rule_index, config_line) =
+                    rule_source(directory, &package.name, &target.name)?;
                 violations.push(DependencyViolation {
                     from: package.name.clone(),
                     disallow: target.name.clone(),
                     manifest: manifest.clone(),
                     config,
                     rule_index,
+                    config_line,
+                    manifest_line: dependency_line(&manifest, &target.name),
                 });
             }
         }
