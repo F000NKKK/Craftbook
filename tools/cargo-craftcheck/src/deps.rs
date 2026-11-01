@@ -146,7 +146,8 @@ fn dependency_line(manifest: &Path, package: &str) -> Option<usize> {
                 .trim_start_matches('[')
                 .trim_end_matches(']')
                 .trim()
-                .replace('"', "").replace('\'', "");
+                .replace('"', "")
+                .replace('\'', "");
             if current == format!("{section}.{key}") {
                 return Some(index + 1);
             }
