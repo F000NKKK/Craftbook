@@ -33,3 +33,10 @@
 ## Нативный инструмент на Rust (экспериментальный)
 
 [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) проверяет политику v2 без Python. Установка: `cargo install --path tools/cargo-craftcheck`. Запуск: `cargo craftcheck check --config craftbook.toml`. Сейчас проверяет только конфигурацию; анализ исходников и графа зависимостей ещё не реализован.
+
+## Расширенные главы
+
+- [Владение и времена жизни](rust/11-ownership-and-lifetimes.md)
+- [Async, акторы и отмена](rust/12-async-and-concurrency.md)
+- [Unsafe, FFI и низкоуровневый код](rust/13-unsafe-and-ffi.md)
+- [Cargo и совместимость](rust/14-cargo-and-compatibility.md)
