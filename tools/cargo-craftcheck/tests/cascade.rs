@@ -271,3 +271,63 @@ fn reports_multiple_workspace_edges_with_aliases_and_target_sections() {
     assert_eq!(report["runs"][0]["results"].as_array().unwrap().len(), 2);
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn isolated_nested_workspace_dependency_violation_is_reported() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-nested-deps-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    fs::create_dir_all(&directory).unwrap();
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\nproject = 'fixture'\nprofiles = ['simple']\n",
+    );
+    write(
+        &directory.join("Cargo.toml"),
+        "[workspace]\nmembers = ['outer']\nresolver = '2'\n",
+    );
+    write(
+        &directory.join("outer/Cargo.toml"),
+        "[package]\nname = 'outer'\nversion = '0.1.0'\nedition = '2024'\n",
+    );
+    write(&directory.join("outer/src/lib.rs"), "pub fn outer() {}\n");
+    write(
+        &directory.join("nested/CraftBook.toml"),
+        "[[dependency_rule]]\nfrom = 'inner'\ndisallow = 'leaf'\n",
+    );
+    write(
+        &directory.join("nested/Cargo.toml"),
+        "[workspace]\nmembers = ['inner', 'leaf']\nresolver = '2'\n",
+    );
+    write(
+        &directory.join("nested/inner/Cargo.toml"),
+        "[package]\nname = 'inner'\nversion = '0.1.0'\nedition = '2024'\n[dependencies]\nleaf = { path = '../leaf' }\n",
+    );
+    write(
+        &directory.join("nested/inner/src/lib.rs"),
+        "pub fn inner() { leaf::leaf(); }\n",
+    );
+    write(
+        &directory.join("nested/leaf/Cargo.toml"),
+        "[package]\nname = 'leaf'\nversion = '0.1.0'\nedition = '2024'\n",
+    );
+    write(&directory.join("nested/leaf/src/lib.rs"), "pub fn leaf() {}\n");
+    let output = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
+        .args(["deps", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let diagnostics = report["diagnostics"].as_array().unwrap();
+    assert_eq!(diagnostics.len(), 1);
+    assert_eq!(diagnostics[0]["rule_id"], "CB002");
+    assert!(diagnostics[0]["config_path"]
+        .as_str()
+        .unwrap()
+        .ends_with("nested/CraftBook.toml"));
+    fs::remove_dir_all(&directory).unwrap();
+}
