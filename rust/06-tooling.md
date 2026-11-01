@@ -10,7 +10,7 @@ Run Miri for relevant unsafe code, fuzzers for untrusted input, sanitizers where
 
 The historical `tools/craftcheck` enforces Craftbook v1 and is retained **only for migration**. It is not an authority for v2. The small `tools/craftcheck_v2.py` validates v2 project policy without pretending to parse Rust using regular expressions. Let rustc and Cargo validate source and dependencies.
 
-Example: `python3 tools/craftcheck_v2.py templates/craftbook.toml`.
+Example: `python3 tools/craftcheck_v2.py templates/CraftBook.toml`.
 
 A hard CI gate needs a demonstrable correctness, security, compatibility or declared project-contract reason. Arbitrary line limits, naming blacklists and test percentages are advisory signals, not universal failures.
 
@@ -20,4 +20,8 @@ The experimental [`cargo-craftcheck`](../tools/cargo-craftcheck/README.md) imple
 
 ### Dependency policies (experimental)
 
-`cargo craftcheck deps --config craftbook.toml --manifest-path Cargo.toml` checks optional `[[dependency_rule]]` entries against direct workspace dependencies resolved by Cargo Metadata. Each entry supplies `from` and `disallow` package names. No dependency direction is imposed unless the project specifies it. The current output is human-readable; it is not yet JSON or SARIF.
+`cargo craftcheck deps --config CraftBook.toml --manifest-path Cargo.toml` checks optional `[[dependency_rule]]` entries against direct workspace dependencies resolved by Cargo Metadata. Each entry supplies `from` and `disallow` package names. No dependency direction is imposed unless the project specifies it. The current output is human-readable; it is not yet JSON or SARIF.
+
+### Hierarchical `CraftBook.toml`
+
+The native CLI finds the nearest ancestor configuration and scans down the selected directory tree. Subdirectories can contain their own `CraftBook.toml`; TOML tables merge, while scalars and lists override their inherited counterparts. Run `cargo craftcheck check` or `cargo craftcheck deps` without explicit file arguments. See the [native tool README](../tools/cargo-craftcheck/README.md).
