@@ -4,6 +4,9 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
+- Store CI negative-test fixtures and downloadable reports under the excluded `target/` directory so self-check scans only project policies.
+- Preserve analyzer exit codes and reports even when a diagnostic command fails.
+
 - CI publishes downloadable self-check artifacts containing actual JSON, SARIF and text reports, configuration details, negative-fixture diagnostics and command exit codes.
 - Linux, Windows and macOS test jobs upload their execution logs, including on failed runs.
 
