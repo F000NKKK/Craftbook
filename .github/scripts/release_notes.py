@@ -33,9 +33,10 @@ def git(*args: str) -> str:
 
 
 def commit_summary(tag: str) -> str:
-    previous = git("describe", "--tags", "--abbrev=0", f"{tag}^") if git(
-        "rev-list", "--count", f"{tag}^"
-    ) != "0" else ""
+    try:
+        previous = git("describe", "--tags", "--abbrev=0", f"{tag}^")
+    except subprocess.CalledProcessError:
+        return ""
     if not previous:
         return ""
     commits = git("log", "--format=%s", f"{previous}..{tag}")
