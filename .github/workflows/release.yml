@@ -50,7 +50,7 @@ jobs:
           python3 -m unittest discover -s .github/scripts -p 'test_*.py'
           python3 .github/scripts/prepare_release.py --bump "$BUMP" --channel "$CHANNEL" --output "$GITHUB_OUTPUT"
           cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml --locked
-          cargo package --manifest-path tools/cargo-craftcheck/Cargo.toml --locked
+          cargo package --manifest-path tools/cargo-craftcheck/Cargo.toml --locked --allow-dirty
       - name: Commit and tag prepared release
         env:
           RELEASE_TAG: ${{ steps.prepare.outputs.tag }}
@@ -61,8 +61,22 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md README.md README.ru.md action.yml tools/cargo-craftcheck/Cargo.toml tools/cargo-craftcheck/Cargo.lock tools/cargo-craftcheck/README.md
           git commit -m "release: prepare $RELEASE_TAG"
+          # Never force-push. Rebase on concurrent main updates, then tag the accepted commit.
+          pushed=false
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              pushed=true
+              break
+            fi
+            echo "::warning::main moved; retrying ($attempt/3)"
+          done
+          if [[ "$pushed" != true ]]; then
+            echo "::error::Could not update main; no release tag created"
+            exit 1
+          fi
           git tag -a "$RELEASE_TAG" -m "Craftbook $RELEASE_TAG"
-          git push origin HEAD:main
           git push origin "$RELEASE_TAG"
 
   publish:
