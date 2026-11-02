@@ -54,7 +54,10 @@ pub fn policy_path_span(source: &str, path: &[&str], index: Option<usize>) -> Op
             SourceSpan::new(range.start, range.end, source)
         }
         Some(index) if path == ["dependency_rule"] => {
-            let range = if let Some(table) = current.as_array_of_tables().and_then(|array| array.get(index)) {
+            let range = if let Some(table) = current
+                .as_array_of_tables()
+                .and_then(|array| array.get(index))
+            {
                 table.span()?
             } else {
                 current.as_array()?.get(index)?.span()?
@@ -83,11 +86,12 @@ pub fn invalid_rule_field_span(source: &str, index: usize) -> Option<SourceSpan>
     let doc = document(source)?;
     let item = doc.as_table().get("dependency_rule")?;
     for field in ["from", "disallow"] {
-        let value = if let Some(table) = item.as_array_of_tables().and_then(|array| array.get(index)) {
-            table.get(field)?.as_value()?
-        } else {
-            item.as_array()?.get(index)?.as_inline_table()?.get(field)?
-        };
+        let value =
+            if let Some(table) = item.as_array_of_tables().and_then(|array| array.get(index)) {
+                table.get(field)?.as_value()?
+            } else {
+                item.as_array()?.get(index)?.as_inline_table()?.get(field)?
+            };
         if value.as_str().is_some_and(|text| text.trim().is_empty()) {
             let range = value.span()?;
             return SourceSpan::new(range.start, range.end, source);
@@ -162,7 +166,7 @@ mod tests {
 
     #[test]
     fn inline_rules_have_precise_ranges() {
-        let source = "dependency_rule = [{ from = '', disallow = 'api' }, { from = 'web' }]\\r\\n";
+        let source = "dependency_rule = [{ from = '', disallow = 'api' }, { from = 'web' }]\r\n";
         let entry = rule_span(source, 0).unwrap();
         assert_eq!(&source[entry.bytes], "{ from = '', disallow = 'api' }");
         let missing = rule_span(source, 1).unwrap();
