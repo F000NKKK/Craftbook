@@ -13,6 +13,57 @@ fn usage() {
     );
 }
 
+fn semantic_diagnostics(policy: &cargo_craftcheck::Policy, directory: &Path) -> Vec<Diagnostic> {
+    let mut findings = Vec::new();
+    let sources = cargo_craftcheck::scopes::sources(directory);
+    let mut profile_seen = std::collections::HashSet::new();
+    let mut issues: Vec<(&str, Option<usize>, String)> = Vec::new();
+    if policy.version != 2 {
+        issues.push(("version", None, "version must be 2".to_owned()));
+    }
+    if policy.project.trim().is_empty() {
+        issues.push(("project", None, "project must be a nonempty string".to_owned()));
+    }
+    for (index, profile) in policy.profiles.iter().enumerate() {
+        if !cargo_craftcheck::supported_profile(profile) {
+            issues.push(("profiles", Some(index), format!("unknown profile: {profile}")));
+        }
+        if !profile_seen.insert(profile) {
+            issues.push(("profiles", Some(index), format!("duplicate profile: {profile}")));
+        }
+    }
+    for (index, rule) in policy.dependency_rule.iter().enumerate() {
+        if rule.from.trim().is_empty() || rule.disallow.trim().is_empty() {
+            issues.push((
+                "dependency_rule",
+                Some(index),
+                "dependency rules require nonempty from and disallow".to_owned(),
+            ));
+        }
+    }
+    for (field, index, message) in issues {
+        let mut diagnostic = Diagnostic::new("CB001", message, directory.join("CraftBook.toml").as_path());
+        for path in sources.iter().rev() {
+            let Ok(source) = std::fs::read_to_string(path) else {
+                continue;
+            };
+            let Ok(table) = toml::from_str::<toml::Table>(&source) else {
+                continue;
+            };
+            if !table.contains_key(field) {
+                continue;
+            }
+            diagnostic.path = path.display().to_string();
+            if let Some(span) = cargo_craftcheck::toml_locations::policy_span(&source, field, index) {
+                diagnostic = diagnostic.with_span(&source, &span);
+            }
+            break;
+        }
+        findings.push(diagnostic);
+    }
+    findings
+}
+
 fn check_policy_tree(root: &Path, verbose: bool) -> Result<Vec<Diagnostic>, String> {
     let mut findings = Vec::new();
     let configs = cargo_craftcheck::scopes::discover(root, "CraftBook.toml")?;
@@ -44,9 +95,7 @@ fn check_policy_tree(root: &Path, verbose: bool) -> Result<Vec<Diagnostic>, Stri
         match merged.try_into() {
             Ok(policy) => {
                 let policy: cargo_craftcheck::Policy = policy;
-                for message in cargo_craftcheck::validate(&policy) {
-                    findings.push(Diagnostic::new("CB001", message, &path));
-                }
+                findings.extend(semantic_diagnostics(&policy, dir));
             }
             Err(error) => findings.push(Diagnostic::new("CB001", format!("{error}"), &path)),
         }
