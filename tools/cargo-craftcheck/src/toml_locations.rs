@@ -26,8 +26,11 @@ pub fn policy_span(source: &str, field: &str, index: Option<usize>) -> Option<So
             SourceSpan::new(range.start, range.end, source)
         }
         Some(index) if field == "dependency_rule" => {
-            let table = item.as_array_of_tables()?.get(index)?;
-            let range = table.span()?;
+            let range = if let Some(table) = item.as_array_of_tables().and_then(|array| array.get(index)) {
+                table.span()?
+            } else {
+                item.as_array()?.get(index)?.span()?
+            };
             SourceSpan::new(range.start, range.end, source)
         }
         Some(_) => None,
