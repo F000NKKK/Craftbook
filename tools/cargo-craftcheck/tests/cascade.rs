@@ -666,3 +666,29 @@ fn malformed_ancestor_is_reported_at_its_own_source_location() {
     assert!(diagnostics[0]["line"].as_u64().is_some());
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn effective_config_is_valid_toml() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-config-roundtrip-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\nproject = 'fixture'\nprofiles = ['simple']\n[assurance]\ntest = true\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
+        .arg("config")
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let document = String::from_utf8(output.stdout).unwrap();
+    let value: toml::Value = toml::from_str(&document).unwrap();
+    assert_eq!(value["version"].as_integer(), Some(2));
+    assert_eq!(value["project"].as_str(), Some("fixture"));
+    assert_eq!(value["assurance"]["test"].as_bool(), Some(true));
+    fs::remove_dir_all(&directory).unwrap();
+}
