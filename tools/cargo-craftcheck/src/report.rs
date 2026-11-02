@@ -319,6 +319,55 @@ mod tests {
     }
 
     #[test]
+    fn json_contract_preserves_rule_provenance_and_unknown_locations() {
+        let finding = Diagnostic::new("CB002", "forbidden edge", Path::new("Cargo.toml"))
+            .with_rule(Path::new("CraftBook.toml"), 2)
+            .with_rule_line(Some(4))
+            .with_rule_column(Some(1))
+            .with_rule_end(Some((4, 20)));
+        let output = render(Format::Json, &[finding]).unwrap();
+        let value: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(value["schemaVersion"], 1);
+        assert_eq!(value["tool"], "cargo-craftcheck");
+        assert_eq!(value["success"], false);
+        let item = &value["diagnostics"][0];
+        assert_eq!(item["rule_id"], "CB002");
+        assert_eq!(item["rule_index"], 2);
+        assert_eq!(item["config_path"], "CraftBook.toml");
+        assert_eq!(item["config_line"], 4);
+        assert_eq!(item["config_column"], 1);
+        assert_eq!(item["config_end_line"], 4);
+        assert_eq!(item["config_end_column"], 20);
+        assert!(item.get("line").is_none());
+        assert!(item.get("column").is_none());
+        assert!(item.get("end_line").is_none());
+        assert!(item.get("end_column").is_none());
+    }
+
+    #[test]
+    fn sarif_contract_preserves_rule_provenance_as_related_location() {
+        let finding = Diagnostic::new("CB002", "forbidden edge", Path::new("Cargo.toml"))
+            .at(8, 4)
+            .with_end(8, 24)
+            .with_rule(Path::new("CraftBook.toml"), 1)
+            .with_rule_line(Some(5))
+            .with_rule_column(Some(8))
+            .with_rule_end(Some((5, 16)));
+        let output = render(Format::Sarif, &[finding]).unwrap();
+        let value: serde_json::Value = serde_json::from_str(&output).unwrap();
+        let result = &value["runs"][0]["results"][0];
+        assert_eq!(result["ruleId"], "CB002");
+        assert_eq!(result["locations"][0]["physicalLocation"]["region"]["startLine"], 8);
+        assert_eq!(result["locations"][0]["physicalLocation"]["region"]["startColumn"], 4);
+        assert_eq!(result["locations"][0]["physicalLocation"]["region"]["endColumn"], 24);
+        let related = &result["relatedLocations"][0]["physicalLocation"];
+        assert_eq!(related["region"]["startLine"], 5);
+        assert_eq!(related["region"]["startColumn"], 8);
+        assert_eq!(related["region"]["endColumn"], 16);
+        assert_eq!(result["properties"]["ruleIndex"], 1);
+    }
+
+    #[test]
     fn unknown_format_is_rejected() {
         assert!(Format::parse("xml").is_err());
     }
