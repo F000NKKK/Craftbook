@@ -1,6 +1,6 @@
 [package]
 name = "cargo-craftcheck"
-version = "2.0.0-rc7"
+version = "2.0.0-rc8"
 edition = "2024"
 description = "Portable Craftbook v2 policy validator for Cargo workspaces"
 license = "MIT OR Apache-2.0"
