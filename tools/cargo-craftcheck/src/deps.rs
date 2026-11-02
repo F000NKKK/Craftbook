@@ -101,7 +101,9 @@ pub struct DependencyViolation {
     pub config_end: Option<(usize, usize)>,
 }
 
-fn dependency_position(manifest: &Path, package: &str) -> Option<((usize, usize), (usize, usize))> {
+type SourceCoordinates = ((usize, usize), (usize, usize));
+
+fn dependency_position(manifest: &Path, package: &str) -> Option<SourceCoordinates> {
     let source = std::fs::read_to_string(manifest).ok()?;
     let span = crate::toml_locations::dependency_span_in(&source, package)?;
     span.positions(&source)
@@ -117,7 +119,7 @@ fn rule_source(
     directory: &Path,
     from: &str,
     disallow: &str,
-) -> Result<(PathBuf, usize, Option<((usize, usize), (usize, usize))>), String> {
+) -> Result<(PathBuf, usize, Option<SourceCoordinates>), String> {
     for path in crate::scopes::sources(directory).into_iter().rev() {
         let content = std::fs::read_to_string(&path)
             .map_err(|error| format!("{}: {error}", path.display()))?;
