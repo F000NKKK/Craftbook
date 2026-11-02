@@ -28,3 +28,20 @@ unsafe_review_required = true
 #
 # To replace inherited dependency rules with no restrictions in a nested policy:
 # dependency_rule = []  # place at the top level, before any [table] headers
+
+# Optional package classification. Explicit [package.metadata.craftbook] in
+# individual Cargo.toml files takes precedence over selectors.
+# [architecture]
+# require_classification = true
+#
+# [[package]]
+# match = "*-domain"
+# layer = "domain"
+# context = "core"
+# tags = ["critical"]
+#
+# [[dependency_rule]]
+# id = "ARCH001"
+# when = 'from.layer == "domain" && to.layer in ["app", "infra"]'
+# action = "deny"
+# message = "Domain cannot depend on application or infrastructure"
