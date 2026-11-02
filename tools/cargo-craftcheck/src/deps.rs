@@ -174,6 +174,8 @@ pub fn check_workspace(path: &Path, rules: &[DependencyRule]) -> Result<Vec<Stri
 
 #[derive(Debug, Clone)]
 pub struct DependencyViolation {
+    pub rule_id: Option<String>,
+    pub description: Option<String>,
     pub from: String,
     pub disallow: String,
     pub manifest: PathBuf,
@@ -310,6 +312,8 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
                     rule_source(directory, &rule.from, &rule.disallow, rule.when.as_deref())?;
                 let manifest_position = dependency_position(&manifest, &target.name);
                 violations.push(DependencyViolation {
+                    rule_id: rule.id.clone(),
+                    description: rule.message.clone(),
                     from: package.name.clone(),
                     disallow: target.name.clone(),
                     manifest: manifest.clone(),
