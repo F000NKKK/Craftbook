@@ -357,9 +357,18 @@ mod tests {
         let value: serde_json::Value = serde_json::from_str(&output).unwrap();
         let result = &value["runs"][0]["results"][0];
         assert_eq!(result["ruleId"], "CB002");
-        assert_eq!(result["locations"][0]["physicalLocation"]["region"]["startLine"], 8);
-        assert_eq!(result["locations"][0]["physicalLocation"]["region"]["startColumn"], 4);
-        assert_eq!(result["locations"][0]["physicalLocation"]["region"]["endColumn"], 24);
+        assert_eq!(
+            result["locations"][0]["physicalLocation"]["region"]["startLine"],
+            8
+        );
+        assert_eq!(
+            result["locations"][0]["physicalLocation"]["region"]["startColumn"],
+            4
+        );
+        assert_eq!(
+            result["locations"][0]["physicalLocation"]["region"]["endColumn"],
+            24
+        );
         let related = &result["relatedLocations"][0]["physicalLocation"];
         assert_eq!(related["region"]["startLine"], 5);
         assert_eq!(related["region"]["startColumn"], 8);
