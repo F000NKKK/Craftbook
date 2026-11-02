@@ -187,9 +187,10 @@ fn run() -> Result<(), String> {
                         let mut diagnostic = Diagnostic::new("CB002", message, &violation.manifest)
                             .with_rule(&violation.config, violation.rule_index)
                             .with_rule_line(violation.config_line)
+                            .with_rule_column(violation.config_column)
                             .with_rule_end(violation.config_end);
                         if let Some(line) = violation.manifest_line {
-                            diagnostic = diagnostic.at(line, 1);
+                            diagnostic = diagnostic.at(line, violation.manifest_column.unwrap_or(1));
                         }
                         if let Some((line, column)) = violation.manifest_end {
                             diagnostic = diagnostic.with_end(line, column);
