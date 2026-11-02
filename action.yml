@@ -7,7 +7,7 @@ inputs:
   version:
     description: cargo-craftcheck version from crates.io
     required: false
-    default: 2.0.0-rc7
+    default: 2.0.0-rc8
   command:
     description: check, deps, or both
     required: false
