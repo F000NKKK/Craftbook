@@ -166,8 +166,13 @@ mod tests {
     fn reports_nested_shape_and_type_locations() {
         let source = "version = 'wrong'\r\nproject = 7\r\nprofiles = ['simple', 4]\r\n[assurance]\r\nclippy = 'yes'\r\nmagic = true\r\n";
         let diagnostics = inspect(Path::new("CraftBook.toml"), source);
-        for expected in ["version must be integer", "project must be string", "profiles[1] must be string",
-            "assurance.clippy must be boolean", "unknown assurance field: magic"] {
+        for expected in [
+            "version must be integer",
+            "project must be string",
+            "profiles[1] must be string",
+            "assurance.clippy must be boolean",
+            "unknown assurance field: magic",
+        ] {
             let found = diagnostics.iter().find(|d| d.message == expected).unwrap();
             assert!(found.line.is_some(), "{expected}");
             assert!(found.column.is_some(), "{expected}");
@@ -180,9 +185,21 @@ mod tests {
     fn reports_unknown_fields_and_incomplete_rules() {
         let source = "version = 2\nproject = 'x'\nunknown = true\n[[dependency_rule]]\nfrom = 42\nextra = 'x'\n";
         let diagnostics = inspect(Path::new("CraftBook.toml"), source);
-        assert!(diagnostics.iter().any(|d| d.message == "unknown policy field: unknown" && d.line == Some(3)));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message == "unknown policy field: unknown" && d.line == Some(3))
+        );
         assert!(diagnostics.iter().any(|d| d.message == "dependency_rule[0].from must be string" && d.line == Some(5)));
-        assert!(diagnostics.iter().any(|d| d.message == "unknown dependency_rule field: extra" && d.line == Some(6)));
-        assert!(diagnostics.iter().any(|d| d.message == "dependency_rule[0] missing disallow" && d.line == Some(4)));
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message == "unknown dependency_rule field: extra" && d.line == Some(6))
+        );
+        assert!(
+            diagnostics
+                .iter()
+                .any(|d| d.message == "dependency_rule[0] missing disallow" && d.line == Some(4))
+        );
     }
 }
