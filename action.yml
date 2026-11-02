@@ -1,0 +1,75 @@
+name: Craftbook policy check
+description: Validate CraftBook.toml policies and Cargo workspace dependency boundaries
+branding:
+  icon: check-circle
+  color: blue
+inputs:
+  version:
+    description: cargo-craftcheck version from crates.io
+    required: false
+    default: 2.0.0-rc7
+  command:
+    description: check, deps, or both
+    required: false
+    default: both
+  config:
+    description: Relative path to root CraftBook.toml
+    required: false
+    default: CraftBook.toml
+  report-format:
+    description: text, json, or sarif
+    required: false
+    default: sarif
+  upload-report:
+    description: Upload result files as GitHub Actions artifacts
+    required: false
+    default: 'true'
+  artifact-name:
+    description: Name of the optional uploaded artifact
+    required: false
+    default: craftbook-report
+runs:
+  using: composite
+  steps:
+    - name: Install cargo-craftcheck
+      shell: bash
+      env:
+        CRAFTBOOK_VERSION: ${{ inputs.version }}
+      run: cargo install cargo-craftcheck --version "$CRAFTBOOK_VERSION" --locked
+    - name: Check project
+      id: validate
+      shell: bash
+      env:
+        CRAFTBOOK_COMMAND: ${{ inputs.command }}
+        CRAFTBOOK_CONFIG: ${{ inputs.config }}
+        CRAFTBOOK_FORMAT: ${{ inputs.report-format }}
+        CRAFTBOOK_REPORT_DIR: ${{ runner.temp }}/craftbook-reports
+      run: |
+        set -uo pipefail
+        mkdir -p "$CRAFTBOOK_REPORT_DIR"
+        case "$CRAFTBOOK_COMMAND" in
+          check) commands=(check) ;;
+          deps) commands=(deps) ;;
+          both) commands=(check deps) ;;
+          *) echo "::error::Invalid Craftbook command: $CRAFTBOOK_COMMAND"; exit 2 ;;
+        esac
+        case "$CRAFTBOOK_FORMAT" in
+          text|json|sarif) ;;
+          *) echo "::error::Invalid Craftbook report format: $CRAFTBOOK_FORMAT"; exit 2 ;;
+        esac
+        suffix="$CRAFTBOOK_FORMAT"
+        if [ "$suffix" = text ]; then suffix=txt; fi
+        status=0
+        for command in "${commands[@]}"; do
+          cargo craftcheck "$command" --config "$CRAFTBOOK_CONFIG" --format "$CRAFTBOOK_FORMAT" > "$CRAFTBOOK_REPORT_DIR/$command.$suffix" 2> "$CRAFTBOOK_REPORT_DIR/$command.stderr" || status=1
+          cat "$CRAFTBOOK_REPORT_DIR/$command.$suffix"
+          cat "$CRAFTBOOK_REPORT_DIR/$command.stderr" >&2
+        done
+        exit "$status"
+    - name: Upload reports
+      if: always() && inputs.upload-report == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ runner.temp }}/craftbook-reports/
+        if-no-files-found: warn
