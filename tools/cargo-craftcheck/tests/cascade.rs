@@ -830,10 +830,18 @@ fn inline_dependency_rule_errors_have_exact_json_and_sarif_ranges() {
         .unwrap();
     assert!(!sarif.status.success());
     let output: serde_json::Value = serde_json::from_slice(&sarif.stdout).unwrap();
-    assert!(output["runs"][0]["results"].as_array().unwrap().iter().any(|d| {
-        d["message"]["text"] == "dependency_rule[0].from must be string"
-            && d["locations"][0]["physicalLocation"]["region"]["startLine"] == 3
-            && d["locations"][0]["physicalLocation"]["region"]["endColumn"].as_u64().is_some()
-    }));
+    assert!(
+        output["runs"][0]["results"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|d| {
+                d["message"]["text"] == "dependency_rule[0].from must be string"
+                    && d["locations"][0]["physicalLocation"]["region"]["startLine"] == 3
+                    && d["locations"][0]["physicalLocation"]["region"]["endColumn"]
+                        .as_u64()
+                        .is_some()
+            })
+    );
     fs::remove_dir_all(&directory).unwrap();
 }
