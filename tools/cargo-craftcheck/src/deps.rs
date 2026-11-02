@@ -76,15 +76,11 @@ fn classified(package: &Package, policy: &crate::Policy) -> serde_json::Value {
         .collect();
     for selector in &policy.package {
         if selector.matches(&package.name) {
-            if layer.is_empty() {
-                if let Some(value) = &selector.layer {
-                    layer = value.clone();
-                }
+            if layer.is_empty() && let Some(value) = &selector.layer {
+                layer = value.clone();
             }
-            if context.is_empty() {
-                if let Some(value) = &selector.context {
-                    context = value.clone();
-                }
+            if context.is_empty() && let Some(value) = &selector.context {
+                context = value.clone();
             }
             for tag in &selector.tags {
                 if !tags.contains(tag) {
