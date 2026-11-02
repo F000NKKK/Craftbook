@@ -62,7 +62,10 @@ impl DependencyRule {
                 .map_err(|error| format!("invalid CEL expression: {error}"))?;
             let mut context = cel::Context::default();
             for (name, package) in [("from", source), ("to", target)] {
-                let custom = package.metadata.get("craftbook").cloned()
+                let custom = package
+                    .metadata
+                    .get("craftbook")
+                    .cloned()
                     .unwrap_or_else(|| serde_json::json!({}));
                 let value = serde_json::json!({
                     "name": package.name,
@@ -70,11 +73,16 @@ impl DependencyRule {
                     "context": custom.get("context").and_then(|value| value.as_str()).unwrap_or(""),
                     "tags": custom.get("tags").and_then(|value| value.as_array()).cloned().unwrap_or_default()
                 });
-                context.add_variable(name, cel::to_value(&value)
-                    .map_err(|error| format!("invalid package metadata: {error}"))?)
+                context
+                    .add_variable(
+                        name,
+                        cel::to_value(&value)
+                            .map_err(|error| format!("invalid package metadata: {error}"))?,
+                    )
                     .map_err(|error| format!("CEL context: {error}"))?;
             }
-            let result = program.execute(&context)
+            let result = program
+                .execute(&context)
                 .map_err(|error| format!("CEL evaluation failed: {error}"))?;
             return match result {
                 cel::Value::Bool(value) => Ok(value),
@@ -84,7 +92,6 @@ impl DependencyRule {
         Ok(self.from == source.name && self.disallow == target.name)
     }
 }
-
 
 /// Get the Cargo workspace root for a manifest, without resolving dependencies.
 pub fn workspace_root(manifest: &Path) -> Result<String, String> {
@@ -240,7 +247,9 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
                 continue;
             };
             for rule in &policy.dependency_rule {
-                if !rule.matches(package, target)? { continue; }
+                if !rule.matches(package, target)? {
+                    continue;
+                }
                 let (config, rule_index, config_position) =
                     rule_source(directory, &rule.from, &rule.disallow, rule.when.as_deref())?;
                 let manifest_position = dependency_position(&manifest, &target.name);
@@ -321,7 +330,9 @@ pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
                 continue;
             };
             for rule in &policy.dependency_rule {
-                if !rule.matches(package, target)? { continue; }
+                if !rule.matches(package, target)? {
+                    continue;
+                }
                 findings.push(format!(
                     "{}: {} must not depend on {}",
                     dir.display(),
@@ -395,7 +406,10 @@ mod tests {
         let rules = vec![DependencyRule {
             from: "a".into(),
             disallow: "b".into(),
-            id: None, when: None, action: None, message: None,
+            id: None,
+            when: None,
+            action: None,
+            message: None,
         }];
         assert_eq!(
             check_metadata(METADATA, &rules).unwrap(),
@@ -408,7 +422,10 @@ mod tests {
         let rules = vec![DependencyRule {
             from: "a".into(),
             disallow: "c".into(),
-            id: None, when: None, action: None, message: None,
+            id: None,
+            when: None,
+            action: None,
+            message: None,
         }];
         assert!(check_metadata(METADATA, &rules).unwrap().is_empty());
     }
