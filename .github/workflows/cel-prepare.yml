@@ -28,5 +28,7 @@ jobs:
           git add tools/cargo-craftcheck/Cargo.lock tools/cargo-craftcheck/src
           if ! git diff --cached --quiet; then
             git commit -m "build: synchronize CEL lockfile and Rust formatting"
+            git fetch origin feature/cel-policy-v2
+            git rebase origin/feature/cel-policy-v2
             git push origin HEAD:feature/cel-policy-v2
           fi
