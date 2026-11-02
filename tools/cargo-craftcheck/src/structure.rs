@@ -57,8 +57,7 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
             ));
             continue;
         }
-        if key == "profiles" {
-            if let Some(items) = value.as_array() {
+        if key == "profiles" && let Some(items) = value.as_array() {
                 for (index, entry) in items.iter().enumerate() {
                     if !entry.is_str() {
                         let mut finding = Diagnostic::new(
@@ -74,7 +73,6 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
                         diagnostics.push(finding);
                     }
                 }
-            }
         }
         if key == "assurance" || key == "constraints" {
             let allowed: &[&str] = if key == "assurance" {
@@ -102,8 +100,7 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
                 }
             }
         }
-        if key == "dependency_rule" {
-            if let Some(rules) = value.as_array() {
+        if key == "dependency_rule" && let Some(rules) = value.as_array() {
                 for (index, rule) in rules.iter().enumerate() {
                     if let Some(fields) = rule.as_table() {
                         for (field, entry) in fields {
@@ -152,7 +149,6 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
                         diagnostics.push(finding);
                     }
                 }
-            }
         }
     }
     diagnostics
