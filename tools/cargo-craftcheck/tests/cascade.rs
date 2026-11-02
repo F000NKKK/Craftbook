@@ -656,7 +656,13 @@ fn malformed_ancestor_is_reported_at_its_own_source_location() {
             .replace('\\', "/")
             .ends_with("/CraftBook.toml")
     );
-    assert!(!diagnostics[0]["path"].as_str().unwrap().replace('\\', "/").contains("/nested/"));
+    assert!(
+        !diagnostics[0]["path"]
+            .as_str()
+            .unwrap()
+            .replace('\\', "/")
+            .contains("/nested/")
+    );
     assert!(diagnostics[0]["line"].as_u64().is_some());
     fs::remove_dir_all(&directory).unwrap();
 }
