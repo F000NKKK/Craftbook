@@ -80,10 +80,46 @@ jobs:
             exit 1
           fi
           grep -Fq "CraftBook.toml:1:11: [CB001] version must be integer" "$fixture/report.txt"
+          mkdir -p self-check-reports/invalid-policy
+          cp "$fixture/report.json" self-check-reports/invalid-policy/check.json
+          cp "$fixture/report.sarif" self-check-reports/invalid-policy/check.sarif
+          cp "$fixture/report.txt" self-check-reports/invalid-policy/check.txt
+          cp "$fixture/CraftBook.toml" self-check-reports/invalid-policy/CraftBook.toml
       - name: Self-check SARIF output
         run: |
           cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- deps --format sarif > craftcheck.sarif
           jq -e '.version == "2.1.0" and (.runs | length == 1)' craftcheck.sarif
+      - name: Capture self-check analysis reports
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p self-check-reports/project
+          cp craftcheck.json self-check-reports/project/check.json 2>/dev/null || true
+          cp craftcheck.sarif self-check-reports/project/deps.sarif 2>/dev/null || true
+          if [ -x tools/cargo-craftcheck/target/debug/cargo-craftcheck ]; then
+            checker="$PWD/tools/cargo-craftcheck/target/debug/cargo-craftcheck"
+            "$checker" check --format text > self-check-reports/project/check.txt 2>&1
+            printf 'check text exit: %s\n' "$?" > self-check-reports/exit-codes.txt
+            "$checker" deps --format json > self-check-reports/project/deps.json 2> self-check-reports/project/deps-errors.txt
+            printf 'deps json exit: %s\n' "$?" >> self-check-reports/exit-codes.txt
+            "$checker" config > self-check-reports/project/effective-config.toml 2> self-check-reports/project/config-errors.txt
+            printf 'config exit: %s\n' "$?" >> self-check-reports/exit-codes.txt
+            (cd tools/cargo-craftcheck && "$checker" explain) > self-check-reports/project/nested-explain.txt 2>&1
+            printf 'nested explain exit: %s\n' "$?" >> self-check-reports/exit-codes.txt
+          else
+            echo "Checker binary not available; inspect previous build steps." > self-check-reports/exit-codes.txt
+          fi
+          printf '# Craftbook self-check report\n\nWorkflow: %s\nCommit: %s\nRun: %s\n\nOutputs are collected from actual analyzer executions. See exit-codes.txt and individual reports.\n' \
+            "$GITHUB_WORKFLOW" "$GITHUB_SHA" "$GITHUB_RUN_ID" > self-check-reports/README.md
+      - name: Upload self-check analysis artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: craftbook-self-check-${{ github.run_id }}
+          path: self-check-reports/
+          if-no-files-found: warn
+          retention-days: 30
 
   portability:
     name: Test on ${{ matrix.os }}
