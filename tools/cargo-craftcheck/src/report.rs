@@ -289,8 +289,10 @@ mod tests {
         let span = crate::source::SourceSpan::new(offset, offset + 5, source).unwrap();
         let finding = Diagnostic::new("CB001", "invalid value", Path::new("CraftBook.toml"))
             .with_span(source, &span);
-        let json: serde_json::Value = serde_json::from_str(&render(Format::Json, &[finding.clone()]).unwrap()).unwrap();
-        let sarif: serde_json::Value = serde_json::from_str(&render(Format::Sarif, &[finding]).unwrap()).unwrap();
+        let json: serde_json::Value =
+            serde_json::from_str(&render(Format::Json, &[finding.clone()]).unwrap()).unwrap();
+        let sarif: serde_json::Value =
+            serde_json::from_str(&render(Format::Sarif, &[finding]).unwrap()).unwrap();
         let item = &json["diagnostics"][0];
         let region = &sarif["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"];
         assert_eq!(json["schemaVersion"], 1);
