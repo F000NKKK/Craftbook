@@ -4,6 +4,9 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
+- Added tag-driven GitHub Release and crates.io publishing workflow with version consistency checks, changelog-derived release notes, commit summaries, and repeat-publication safeguards.
+- Added regression tests for release notes generation.
+
 ## v2.0.0-rc8 — 2026-11-02
 
 - Introduced the Craftbook composite GitHub Action for policy and Cargo workspace dependency checks, using the published cargo-craftcheck package.
