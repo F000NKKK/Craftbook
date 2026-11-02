@@ -34,6 +34,19 @@ pub fn policy_span(source: &str, field: &str, index: Option<usize>) -> Option<So
     }
 }
 
+/// Locate the first invalid (empty) dependency-rule field, if present.
+pub fn invalid_rule_field_span(source: &str, index: usize) -> Option<SourceSpan> {
+    let doc = document(source)?;
+    let table = doc.as_table().get("dependency_rule")?.as_array_of_tables()?.get(index)?;
+    for field in ["from", "disallow"] {
+        let value = table.get(field)?;
+        if value.as_str().is_some_and(|text| text.trim().is_empty()) {
+            return span(source, value);
+        }
+    }
+    None
+}
+
 /// Returns the value span for one unambiguous direct Cargo dependency declaration.
 pub fn dependency_span(manifest: &Path, package: &str) -> Option<SourceSpan> {
     let source = std::fs::read_to_string(manifest).ok()?;
