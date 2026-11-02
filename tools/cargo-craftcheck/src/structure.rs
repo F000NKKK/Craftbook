@@ -104,7 +104,7 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
             for (index, rule) in rules.iter().enumerate() {
                 if let Some(fields) = rule.as_table() {
                     for (field, entry) in fields {
-                        let message = if field != "from" && field != "disallow" {
+                        let message = if !["from", "disallow", "id", "when", "action", "message"].contains(&field.as_str()) {
                             Some(format!("unknown dependency_rule field: {field}"))
                         } else if !entry.is_str() {
                             Some(format!("dependency_rule[{index}].{field} must be string"))
@@ -121,7 +121,7 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
                             diagnostics.push(finding);
                         }
                     }
-                    for required in ["from", "disallow"] {
+                    for required in if fields.contains_key("when") { Vec::new() } else { vec!["from", "disallow"] } {
                         if !fields.contains_key(required) {
                             let mut finding = Diagnostic::new(
                                 "CB001",
