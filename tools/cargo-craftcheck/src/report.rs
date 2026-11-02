@@ -22,6 +22,8 @@ pub struct Diagnostic {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config_line: Option<usize>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub config_column: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub config_end_line: Option<usize>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config_end_column: Option<usize>,
@@ -40,6 +42,7 @@ impl Diagnostic {
             end_line: None,
             end_column: None,
             config_line: None,
+            config_column: None,
             config_end_line: None,
             config_end_column: None,
         }
@@ -72,6 +75,11 @@ impl Diagnostic {
             self.config_end_line = Some(line);
             self.config_end_column = Some(column);
         }
+        self
+    }
+
+    pub fn with_rule_column(mut self, column: Option<usize>) -> Self {
+        self.config_column = column;
         self
     }
 
@@ -171,6 +179,7 @@ pub fn render_with_root(
                             "configPath": item.config_path,
                             "ruleIndex": item.rule_index,
                             "configLine": item.config_line,
+                            "configColumn": item.config_column,
                             "configEndLine": item.config_end_line,
                             "configEndColumn": item.config_end_column
                         },
@@ -181,7 +190,7 @@ pub fn render_with_root(
                                     config,
                                     root,
                                     item.config_line,
-                                    1,
+                                    item.config_column.unwrap_or(1),
                                     item.config_end_line.zip(item.config_end_column)
                                 )
                             })]
