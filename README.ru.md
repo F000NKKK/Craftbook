@@ -6,11 +6,15 @@
 
 ### Практический инженерный стандарт Rust — от библиотек до операционных систем
 
+[![cargo-craftcheck](https://img.shields.io/crates/v/cargo-craftcheck.svg?label=cargo-craftcheck&cacheSeconds=86400)](https://crates.io/crates/cargo-craftcheck)
+[![docs.rs](https://img.shields.io/docsrs/cargo-craftcheck?cacheSeconds=86400)](https://docs.rs/cargo-craftcheck)
+[![Downloads](https://img.shields.io/crates/d/cargo-craftcheck.svg?cacheSeconds=86400)](https://crates.io/crates/cargo-craftcheck)
+[![CI](https://github.com/F000NKKK/Craftbook/actions/workflows/craftbook-v2.yml/badge.svg)](https://github.com/F000NKKK/Craftbook/actions/workflows/craftbook-v2.yml)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](tools/cargo-craftcheck/Cargo.toml)
 ![Rust](https://img.shields.io/badge/language-Rust-CE422B)
 ![Edition 2024](https://img.shields.io/badge/edition-2024-informational)
 ![Handbook v2](https://img.shields.io/badge/handbook-v2-blue)
-[![CI](https://github.com/F000NKKK/Craftbook/actions/workflows/craftbook-v2.yml/badge.svg)](https://github.com/F000NKKK/Craftbook/actions/workflows/craftbook-v2.yml)
-![cargo-craftcheck](https://img.shields.io/badge/cargo--craftcheck-experimental-yellow)
+![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-informational)
 
 🇺🇸 [English](README.md) | 🇷🇺 **Русский**
 
@@ -70,13 +74,11 @@
 
 Изучи [принципы](#-принципы), выбери подходящий [архитектурный профиль](rust/07-architecture-ddd.md) и используй [пример политики](templates/CraftBook.toml). Следовать руководству можно без установки дополнительных инструментов.
 
-Для экспериментальной нативной проверки политики:
+Установи опубликованный релиз-кандидат утилиты проверки политики:
 
 ```bash
-git clone https://github.com/F000NKKK/Craftbook.git
-cd Craftbook
-cargo install --path tools/cargo-craftcheck
-cargo craftcheck check --config templates/CraftBook.toml
+cargo install cargo-craftcheck --version 2.0.0-rc6
+cargo craftcheck check
 ```
 
 Утилита проверяет **конфигурацию политики** и явно заданные запреты прямых зависимостей Cargo Workspace; архитектуру исходного Rust-кода пока не анализирует.
@@ -87,7 +89,7 @@ cargo craftcheck check --config templates/CraftBook.toml
 |---|---|---|
 | `cargo fmt` | Форматирование Rust | Стандартный инструмент |
 | `cargo clippy` | Диагностика с учётом компилятора | Стандартный инструмент |
-| [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) | Проверка политики и прямых зависимостей | Экспериментальный |
+| [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) | Проверка политики и прямых зависимостей | Релиз-кандидат |
 
 ```bash
 cargo fmt --all --check --manifest-path tools/cargo-craftcheck/Cargo.toml
