@@ -393,6 +393,6 @@ fn semantic_errors_point_to_original_policy_fields() {
     assert!(diagnostics.iter().any(|d| d["message"] == "duplicate profile: ddd"
         && d["line"] == 1 && d["column"].as_u64().is_some()));
     assert!(diagnostics.iter().any(|d| d["message"] == "dependency rules require nonempty from and disallow"
-        && d["line"] == 2 && d["end_line"].as_u64().is_some()));
+        && d["line"] == 3 && d["end_line"].as_u64().is_some()));
     fs::remove_dir_all(&directory).unwrap();
 }
