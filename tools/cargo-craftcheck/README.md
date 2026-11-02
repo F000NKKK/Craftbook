@@ -94,3 +94,39 @@ The root and crate-local `CraftBook.toml` files are part of the project's own CI
 ## Source-location contract
 
 Diagnostics attached to concrete syntax elements require exact source ranges. A source range is stored as a half-open UTF-8 byte interval and converted into one-based Unicode-scalar line/column coordinates for JSON and SARIF. Unknown positions must be omitted, never guessed. Infrastructure-level errors without a concrete source element may remain location-only. TOML syntax errors carry parser-provided start/end coordinates in JSON and SARIF. Cargo dependency declarations and `[[dependency_rule]]` entries are located with the parsed TOML syntax tree; their full ranges are retained where the declaration is unambiguous. Semantic validation of `version`, `project`, individual `profiles` entries and invalid `dependency_rule` values produces parser-backed source ranges and reports the defining configuration when inherited. Regression tests cover Unicode, CRLF, aliases, nested configurations, and multiple findings.
+
+## Package metadata and CEL dependency rules
+
+Cargo packages may declare architectural attributes:
+
+```toml
+[package.metadata.craftbook]
+layer = "domain"
+context = "source-control"
+tags = ["critical"]
+```
+
+`CraftBook.toml` can supply classifications for packages without explicit
+metadata using `[[package]]` selectors (glob patterns). Explicit Cargo
+`layer` and `context` values take precedence. Selector tags are additive.
+
+```toml
+[architecture]
+require_classification = true
+
+[[package]]
+match = "*-domain"
+layer = "domain"
+context = "default"
+
+[[dependency_rule]]
+id = "ARCH001"
+when = 'from.layer == "domain" && to.layer in ["app", "infra"]'
+action = "deny"
+message = "Domain must not depend on application or infrastructure"
+```
+
+CEL bindings `from` and `to` expose `name`, `layer`, `context` and
+`tags`. Conditions must evaluate to a boolean. Version 2 supports
+`action = "deny"` for conditional rules. Legacy direct
+`from`/`disallow` restrictions remain valid.
