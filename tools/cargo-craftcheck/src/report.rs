@@ -238,8 +238,8 @@ mod tests {
 
     #[test]
     fn text_diagnostics_include_exact_source_position() {
-        let finding = Diagnostic::new("CB001", "invalid value", Path::new("CraftBook.toml"))
-            .at(3, 12);
+        let finding =
+            Diagnostic::new("CB001", "invalid value", Path::new("CraftBook.toml")).at(3, 12);
         let output = render(Format::Text, &[finding]).unwrap();
         assert_eq!(output, "CraftBook.toml:3:12: [CB001] invalid value");
     }
