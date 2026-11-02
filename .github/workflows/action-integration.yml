@@ -70,3 +70,33 @@ jobs:
           RESULT: ${{ steps.invalid-command.outcome }}
         run: |
           test "$RESULT" = failure
+
+      - name: Reject unsupported report format
+        id: invalid-format
+        continue-on-error: true
+        uses: ./
+        with:
+          command: check
+          report-format: xml
+          upload-report: 'false'
+      - name: Assert unsupported format fails
+        if: always()
+        shell: bash
+        env:
+          RESULT: ${{ steps.invalid-format.outcome }}
+        run: test "$RESULT" = failure
+      - name: Reject missing configuration
+        id: missing-config
+        continue-on-error: true
+        uses: ./
+        with:
+          command: check
+          config: does-not-exist/CraftBook.toml
+          report-format: json
+          upload-report: 'false'
+      - name: Assert missing configuration fails
+        if: always()
+        shell: bash
+        env:
+          RESULT: ${{ steps.missing-config.outcome }}
+        run: test "$RESULT" = failure
