@@ -31,7 +31,7 @@ cargo craftcheck check --config CraftBook.toml
 | `config` | Print the effective policy for the current directory |
 | `explain` | Show the policy's source files in inheritance order and the resulting configuration |
 
-The default command is `check`. `--format text|json|sarif` is available for `check` and `deps`. A violation results in a nonzero exit code.
+The default command is `check`. `--format text|json|sarif` is available for `check` and `deps` only. `--config` selects a file named `CraftBook.toml`; `--manifest-path` selects a Cargo manifest for `deps`. Relative paths are resolved against the invoking working directory. Successful commands exit with code 0; invalid options, missing files, policy violations and Cargo inspection failures return a nonzero exit code. `config` writes parseable TOML; `explain` additionally prints the inheritance source list before the effective configuration.
 
 ## Configuration
 
@@ -55,7 +55,7 @@ disallow = "infrastructure"
 
 ## Diagnostics
 
-`check` and `deps` emit human-readable text by default. Structured output supports JSON and SARIF 2.1.0.
+`check` and `deps` emit human-readable text by default. Structured output supports JSON (schemaVersion 1) and SARIF 2.1.0. JSON includes `tool`, `success`, and `diagnostics`; every diagnostic has `rule_id`, `message` and `path`. Unknown source positions are omitted rather than replaced by fictitious coordinates. The order of diagnostics is deterministic. Text diagnostics include `path:line:column` when coordinates are available.
 
 | ID | Meaning |
 | --- | --- |
