@@ -43,6 +43,14 @@ jobs:
       - name: Nested self-check (explain inheritance)
         working-directory: tools/cargo-craftcheck
         run: cargo run --quiet -- explain
+      - name: Validate shipped policy template
+        run: |
+          python3 -c 'import tomllib; p=tomllib.load(open("templates/CraftBook.toml", "rb")); assert p["version"] == 2 and p["project"] == "example" and p["profiles"] == ["simple"]'
+      - name: Validate optional CI template instructions
+        run: |
+          grep -Fq 'cargo craftcheck check --format json' templates/ci.yml
+          grep -Fq 'cargo craftcheck deps --format sarif' templates/ci.yml
+          grep -Fq 'actions/upload-artifact@v4' templates/ci.yml
       - name: Self-check JSON output
         run: |
           cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- check --format json > craftcheck.json
