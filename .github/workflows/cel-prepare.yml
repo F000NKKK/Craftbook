@@ -19,6 +19,8 @@ jobs:
         run: |
           cargo generate-lockfile --manifest-path tools/cargo-craftcheck/Cargo.toml
           cargo fmt --all --manifest-path tools/cargo-craftcheck/Cargo.toml
+      - name: Compile and test CEL integration
+        run: cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
       - name: Commit generated files
         run: |
           git config user.name "github-actions[bot]"
