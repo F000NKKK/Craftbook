@@ -9,8 +9,7 @@ Release history is maintained only in this file.
 - Extended source ranges for inline dependency rules and missing fields.
 - Added nested-policy multi-error regressions and structural type test coverage.
 - Verified the preceding implementation on Linux, Windows and macOS CI.
-
-- Updated English and Russian root READMEs with crates.io version, docs.rs, downloads, CI, license and supported-platform badges, matching the presentation used in Yog, Meridian and Substrate.
+- Updated English and Russian root READMEs with crates.io, docs.rs, download, CI, license and platform badges, and rc7 installation instructions.
 
 ## v2-rc6 — 2026-11-02
 
