@@ -81,18 +81,22 @@ pub fn rule_field_span(source: &str, index: usize, field: &str) -> Option<Source
     SourceSpan::new(range.start, range.end, source)
 }
 
-/// Locate the first invalid (empty) dependency-rule field, if present.
+/// Locate the first empty dependency-rule field, skipping absent fields.
 pub fn invalid_rule_field_span(source: &str, index: usize) -> Option<SourceSpan> {
     let doc = document(source)?;
     let item = doc.as_table().get("dependency_rule")?;
     for field in ["from", "disallow"] {
-        let value =
-            if let Some(table) = item.as_array_of_tables().and_then(|array| array.get(index)) {
-                table.get(field)?.as_value()?
-            } else {
-                item.as_array()?.get(index)?.as_inline_table()?.get(field)?
-            };
-        if value.as_str().is_some_and(|text| text.trim().is_empty()) {
+        let value = if let Some(table) = item.as_array_of_tables().and_then(|array| array.get(index)) {
+            table.get(field).and_then(Item::as_value)
+        } else {
+            item.as_array()?
+                .get(index)?
+                .as_inline_table()?
+                .get(field)
+        };
+        if let Some(value) = value
+            && value.as_str().is_some_and(|text| text.trim().is_empty())
+        {
             let range = value.span()?;
             return SourceSpan::new(range.start, range.end, source);
         }
@@ -163,6 +167,25 @@ pub fn rule_span(source: &str, index: usize) -> Option<SourceSpan> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn empty_second_field_is_located_when_first_field_is_absent() {
+        for source in [
+            "[[dependency_rule]]\ndisallow = ''\n",
+            "dependency_rule = [{ disallow = '' }]\n",
+        ] {
+            let span = invalid_rule_field_span(source, 0).unwrap();
+            assert_eq!(&source[span.bytes], "''");
+        }
+    }
+
+    #[test]
+    fn missing_and_out_of_range_fields_do_not_invent_coordinates() {
+        let source = "dependency_rule = [{ from = 'web' }]\n";
+        assert!(invalid_rule_field_span(source, 0).is_none());
+        assert!(rule_field_span(source, 0, "disallow").is_none());
+        assert!(rule_span(source, 1).is_none());
+    }
 
     #[test]
     fn inline_rules_have_precise_ranges() {
