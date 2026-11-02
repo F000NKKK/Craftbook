@@ -1,0 +1,72 @@
+name: Craftbook Action integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  action-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run Action on repository policies
+        uses: ./
+        with:
+          version: 2.0.0-rc7
+          command: both
+          config: CraftBook.toml
+          report-format: sarif
+          upload-report: 'true'
+          artifact-name: craftbook-action-integration
+      - uses: actions/download-artifact@v4
+        with:
+          name: craftbook-action-integration
+          path: action-results
+      - name: Validate archived SARIF reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f action-results/check.sarif
+          test -f action-results/deps.sarif
+          jq -e '.version == "2.1.0" and .runs[0].tool.driver.name == "cargo-craftcheck"' action-results/check.sarif
+          jq -e '.version == "2.1.0" and .runs[0].tool.driver.name == "cargo-craftcheck"' action-results/deps.sarif
+      - name: Create an invalid policy outside the working tree
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/craftbook-negative"
+          printf 'version = 1\nproject = "broken"\n' > "$RUNNER_TEMP/craftbook-negative/CraftBook.toml"
+      - name: Run Action against invalid policy
+        id: invalid-policy
+        continue-on-error: true
+        uses: ./
+        with:
+          command: check
+          config: ${{ runner.temp }}/craftbook-negative/CraftBook.toml
+          report-format: json
+          upload-report: 'false'
+      - name: Assert invalid policy fails
+        if: always()
+        shell: bash
+        env:
+          RESULT: ${{ steps.invalid-policy.outcome }}
+        run: |
+          test "$RESULT" = failure
+      - name: Reject unsupported command
+        id: invalid-command
+        continue-on-error: true
+        uses: ./
+        with:
+          command: unsupported
+          upload-report: 'false'
+      - name: Assert unsupported command fails
+        if: always()
+        shell: bash
+        env:
+          RESULT: ${{ steps.invalid-command.outcome }}
+        run: |
+          test "$RESULT" = failure
