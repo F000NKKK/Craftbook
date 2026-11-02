@@ -60,6 +60,10 @@ jobs:
             echo "Invalid policy unexpectedly passed"
             exit 1
           fi
+          mkdir -p self-check-reports/invalid-policy
+          cp "$fixture/CraftBook.toml" self-check-reports/invalid-policy/CraftBook.toml
+          cp "$fixture/report.json" self-check-reports/invalid-policy/check.json
+          cp "$fixture/errors.txt" self-check-reports/invalid-policy/check-stderr.txt
           jq -e '
             .schemaVersion == 1 and .tool == "cargo-craftcheck" and .success == false
             and ([.diagnostics[] | select(.message == "version must be integer" and .line == 1 and .column == 11 and .end_column == 18)] | length == 1)
@@ -69,6 +73,7 @@ jobs:
             echo "Invalid policy SARIF unexpectedly passed"
             exit 1
           fi
+          cp "$fixture/report.sarif" self-check-reports/invalid-policy/check.sarif
           jq -e '
             .version == "2.1.0"
             and ([.runs[0].results[] | select(.message.text == "version must be integer"
@@ -79,12 +84,8 @@ jobs:
             echo "Invalid policy text unexpectedly passed"
             exit 1
           fi
-          grep -Fq "CraftBook.toml:1:11: [CB001] version must be integer" "$fixture/report.txt"
-          mkdir -p self-check-reports/invalid-policy
-          cp "$fixture/report.json" self-check-reports/invalid-policy/check.json
-          cp "$fixture/report.sarif" self-check-reports/invalid-policy/check.sarif
           cp "$fixture/report.txt" self-check-reports/invalid-policy/check.txt
-          cp "$fixture/CraftBook.toml" self-check-reports/invalid-policy/CraftBook.toml
+          grep -Fq "CraftBook.toml:1:11: [CB001] version must be integer" "$fixture/report.txt"
       - name: Self-check SARIF output
         run: |
           cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- deps --format sarif > craftcheck.sarif
