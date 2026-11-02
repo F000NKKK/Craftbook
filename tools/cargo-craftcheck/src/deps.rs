@@ -181,9 +181,10 @@ fn rule_source(
                 .as_array()
                 .ok_or_else(|| format!("{}: dependency_rule must be an array", path.display()))?;
             for (index, entry) in list.iter().enumerate() {
-                if entry.get("from").and_then(toml::Value::as_str) == Some(from)
-                    && entry.get("disallow").and_then(toml::Value::as_str) == Some(disallow)
-                    && entry.get("when").and_then(toml::Value::as_str) == when
+                if (when.is_some() && entry.get("when").and_then(toml::Value::as_str) == when)
+                    || (when.is_none()
+                        && entry.get("from").and_then(toml::Value::as_str) == Some(from)
+                        && entry.get("disallow").and_then(toml::Value::as_str) == Some(disallow))
                 {
                     let position = crate::toml_locations::rule_span(&content, index)
                         .and_then(|span| span.positions(&content))
