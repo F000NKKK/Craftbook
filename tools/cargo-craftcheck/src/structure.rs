@@ -157,6 +157,34 @@ mod tests {
     use super::*;
 
     #[test]
+    fn all_declared_scalar_and_nested_types_report_source_ranges() {
+        let cases = [
+            ("version = '2'", "version must be integer"),
+            ("project = 12", "project must be string"),
+            ("profiles = 'simple'", "profiles must be array"),
+            ("profiles = [true]", "profiles[0] must be string"),
+            ("assurance = false", "assurance must be table"),
+            ("constraints = 12", "constraints must be table"),
+            ("dependency_rule = 'no'", "dependency_rule must be array"),
+            ("[assurance]\nformat = 3", "assurance.format must be boolean"),
+            ("[assurance]\ndocs = 3", "assurance.docs must be boolean"),
+            ("[constraints]\nno_std = 3", "constraints.no_std must be boolean"),
+            ("[constraints]\npublic_api_stable = 3", "constraints.public_api_stable must be boolean"),
+            ("[constraints]\nunsafe_review_required = 3", "constraints.unsafe_review_required must be boolean"),
+            ("dependency_rule = [{ from = 7, disallow = 'api' }]", "dependency_rule[0].from must be string"),
+            ("dependency_rule = [{ from = 'api', disallow = false }]", "dependency_rule[0].disallow must be string"),
+        ];
+        for (source, expected) in cases {
+            let findings = inspect(Path::new("CraftBook.toml"), source);
+            let finding = findings.iter().find(|d| d.message == expected).unwrap_or_else(|| panic!("missing {expected} for {source}"));
+            assert!(finding.line.is_some(), "{expected}");
+            assert!(finding.column.is_some(), "{expected}");
+            assert!(finding.end_line.is_some(), "{expected}");
+            assert!(finding.end_column.is_some(), "{expected}");
+        }
+    }
+
+    #[test]
     fn reports_nested_shape_and_type_locations() {
         let source = "version = 'wrong'\r\nproject = 7\r\nprofiles = ['simple', 4]\r\n[assurance]\r\nclippy = 'yes'\r\nmagic = true\r\n";
         let diagnostics = inspect(Path::new("CraftBook.toml"), source);
