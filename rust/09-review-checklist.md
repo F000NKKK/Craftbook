@@ -9,6 +9,6 @@
 - [ ] Concurrency, cancellation, blocking and backpressure considered where relevant?
 - [ ] Unsafe soundness and FFI contracts documented and checked?
 - [ ] Relevant tests, target matrices and performance evidence present?
-- [ ] API, README, migration and security implications addressed?
+- [ ] API, README, compatibility and security implications addressed?
 
 Review findings must state a concrete risk or conflict with an explicit project contract. Purely stylistic advice is not a universal blocker.
