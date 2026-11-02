@@ -35,6 +35,7 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
         ("profiles", "array"),
         ("assurance", "table"),
         ("constraints", "table"),
+        ("architecture", "table"),
         ("dependency_rule", "array"),
     ];
     for (key, value) in &table {
@@ -72,11 +73,11 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
                 }
             }
         }
-        if key == "assurance" || key == "constraints" {
-            let allowed: &[&str] = if key == "assurance" {
-                &["format", "clippy", "test", "docs"]
-            } else {
-                &["no_std", "public_api_stable", "unsafe_review_required"]
+        if key == "assurance" || key == "constraints" || key == "architecture" {
+            let allowed: &[&str] = match key {
+                "assurance" => &["format", "clippy", "test", "docs"],
+                "architecture" => &["require_classification"],
+                _ => &["no_std", "public_api_stable", "unsafe_review_required"],
             };
             if let Some(entries) = value.as_table() {
                 for (field, entry) in entries {
