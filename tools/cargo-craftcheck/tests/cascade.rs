@@ -431,3 +431,50 @@ fn semantic_errors_point_to_original_policy_fields() {
         && d["end_line"].as_u64().is_some()));
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn invalid_policy_structure_has_exact_json_and_sarif_ranges() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-structure-ranges-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    fs::create_dir_all(&directory).unwrap();
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 'bad'\r\nproject = 'app'\r\n[assurance]\r\nclippy = 'yes'\r\n",
+    );
+    let exe = env!("CARGO_BIN_EXE_cargo-craftcheck");
+    for format in ["json", "sarif"] {
+        let output = Command::new(exe)
+            .args(["check", "--format", format])
+            .current_dir(&directory)
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+        if format == "json" {
+            let diagnostics = report["diagnostics"].as_array().unwrap();
+            assert!(diagnostics.iter().any(|d| {
+                d["message"] == "version must be integer"
+                    && d["line"] == 1
+                    && d["column"] == 11
+                    && d["end_column"] == 16
+            }));
+            assert!(diagnostics.iter().any(|d| {
+                d["message"] == "assurance.clippy must be boolean"
+                    && d["line"] == 4
+                    && d["column"] == 10
+            }));
+        } else {
+            let results = report["runs"][0]["results"].as_array().unwrap();
+            assert!(results.iter().any(|d| {
+                d["message"]["text"] == "version must be integer"
+                    && d["locations"][0]["physicalLocation"]["region"]["startLine"] == 1
+                    && d["locations"][0]["physicalLocation"]["region"]["endColumn"] == 16
+            }));
+        }
+    }
+    fs::remove_dir_all(&directory).unwrap();
+}
