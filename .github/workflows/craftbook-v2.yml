@@ -54,11 +54,11 @@ jobs:
       - name: Self-check JSON output
         run: |
           cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- check --format json > craftcheck.json
-          jq -e '.success == true and (.diagnostics | length == 0)' craftcheck.json
+          jq -e '.schemaVersion == 1 and .tool == "cargo-craftcheck" and .success == true and (.diagnostics | length == 0)' craftcheck.json
       - name: Self-check SARIF output
         run: |
           cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- deps --format sarif > craftcheck.sarif
-          jq -e '.version == "2.1.0" and (.runs | length == 1)' craftcheck.sarif
+          jq -e '.version == "2.1.0" and (.runs | length == 1) and .runs[0].tool.driver.name == "cargo-craftcheck" and (.runs[0].results | length == 0)' craftcheck.sarif
       - name: Capture self-check analysis reports
         if: always()
         shell: bash
