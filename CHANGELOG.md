@@ -4,17 +4,12 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
-- Store CI negative-test fixtures and downloadable reports under the excluded `target/` directory so self-check scans only project policies.
-- Preserve analyzer exit codes and reports even when a diagnostic command fails.
-
-- CI publishes downloadable self-check artifacts containing actual JSON, SARIF and text reports, configuration details, negative-fixture diagnostics and command exit codes.
-- Linux, Windows and macOS test jobs upload their execution logs, including on failed runs.
-
-- CI self-check fixture verifies invalid-policy diagnostics in text, JSON and SARIF, including exact source coordinates.
-- Text diagnostics include source line and column; syntax errors inherited from parent configuration point to their defining file.
-
-- Canonical resolution of CLI configuration and manifest paths.
-- Stable ordering of diagnostics and regression tests for path equivalence and repeatability.
+- Self-check analyzes repository configurations only; invalid-input fixtures remain in automated tests.
+- Effective configuration output is valid TOML, verified by an integration test and repository CI self-check.
+- Downloadable self-check artifacts contain actual repository policy/dependency reports, effective configuration, provenance and exit codes.
+- Separate Linux, Windows and macOS jobs retain their own test logs.
+- Text diagnostics include source line and column; inherited TOML syntax failures point to their original file.
+- CLI configuration and manifest paths are canonicalized; diagnostic ordering is deterministic.
 
 ## v2-rc4 — 2026-11-02
 
