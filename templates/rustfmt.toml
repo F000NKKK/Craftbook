@@ -1,4 +1,0 @@
-# Craftbook v2 optional rustfmt conventions. rustfmt is authoritative.
-edition = "2024"
-style_edition = "2024"
-max_width = 100
