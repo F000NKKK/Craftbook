@@ -789,3 +789,51 @@ fn invalid_cargo_manifest_is_reported_without_panicking() {
     );
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn inline_dependency_rule_errors_have_exact_json_and_sarif_ranges() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-inline-ranges-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\r\nproject = 'fixture'\r\ndependency_rule = [{ from = 42, disallow = 'api' }, { from = 'web' }]\r\n",
+    );
+    let executable = env!("CARGO_BIN_EXE_cargo-craftcheck");
+    let json = Command::new(executable)
+        .args(["check", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!json.status.success());
+    let report: serde_json::Value = serde_json::from_slice(&json.stdout).unwrap();
+    let diagnostics = report["diagnostics"].as_array().unwrap();
+    assert!(diagnostics.iter().any(|d| {
+        d["message"] == "dependency_rule[0].from must be string"
+            && d["line"] == 3
+            && d["column"].as_u64().is_some()
+            && d["end_column"].as_u64().is_some()
+    }));
+    assert!(diagnostics.iter().any(|d| {
+        d["message"] == "dependency_rule[1] missing disallow"
+            && d["line"] == 3
+            && d["column"].as_u64().is_some()
+            && d["end_column"].as_u64().is_some()
+    }));
+    let sarif = Command::new(executable)
+        .args(["check", "--format", "sarif"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!sarif.status.success());
+    let output: serde_json::Value = serde_json::from_slice(&sarif.stdout).unwrap();
+    assert!(output["runs"][0]["results"].as_array().unwrap().iter().any(|d| {
+        d["message"]["text"] == "dependency_rule[0].from must be string"
+            && d["locations"][0]["physicalLocation"]["region"]["startLine"] == 3
+            && d["locations"][0]["physicalLocation"]["region"]["endColumn"].as_u64().is_some()
+    }));
+    fs::remove_dir_all(&directory).unwrap();
+}
