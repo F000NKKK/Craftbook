@@ -20,5 +20,24 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
       - run: cargo doc --workspace --no-deps
-  # Optional project jobs: target matrix, fuzzing, Miri, integration,
-  # performance checks, supply chain audits, deployment verification.
+  # Enable this job when the consuming repository has CraftBook.toml.
+  # The checker validates only explicitly declared policy and dependency rules.
+  # craftbook-policy:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@stable
+  #     - run: cargo install --git https://github.com/F000NKKK/Craftbook.git --bin cargo-craftcheck
+  #     - run: cargo craftcheck check --format json > craftcheck.json
+  #     - run: cargo craftcheck deps --format sarif > craftcheck.sarif
+  #     - if: always()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: craftbook-analysis
+  #         path: |
+  #           craftcheck.json
+  #           craftcheck.sarif
+  #         if-no-files-found: warn
+  #
+  # Additional project-specific jobs may cover fuzzing, Miri, supported
+  # targets, supply-chain audits and deployment verification.
