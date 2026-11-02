@@ -166,7 +166,7 @@ mod tests {
 
     #[test]
     fn inline_rules_have_precise_ranges() {
-        let source = "dependency_rule = [{ from = '', disallow = 'api' }, { from = 'web' }]\\r\\n";
+        let source = "dependency_rule = [{ from = '', disallow = 'api' }, { from = 'web' }]\r\n";
         let entry = rule_span(source, 0).unwrap();
         assert_eq!(&source[entry.bytes], "{ from = '', disallow = 'api' }");
         let missing = rule_span(source, 1).unwrap();
