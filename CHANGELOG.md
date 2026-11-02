@@ -4,6 +4,11 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
+- Added CEL expressions to workspace dependency rules with named policy diagnostics and legacy rule compatibility.
+- Added Cargo package architecture metadata and glob-based fallback selectors for layer, context, and tags.
+- Added optional strict classification checks and regression tests for CEL and selector matching.
+- Documented architecture metadata and CEL policy syntax for Cargo projects.
+
 ## v2.0.0-rc9 — 2026-11-02
 
 - Added tag-driven GitHub Release and crates.io publishing workflow with version consistency checks, changelog-derived release notes, commit summaries, and repeat-publication safeguards.
