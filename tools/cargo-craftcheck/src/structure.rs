@@ -40,11 +40,21 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
     for (key, value) in &table {
         if let Some((_, kind)) = fields.iter().find(|(name, _)| name == key) {
             if wrong_type(value, kind) {
-                diagnostics.push(diagnostic(path, source, &[key], format!("{key} must be {kind}")));
+                diagnostics.push(diagnostic(
+                    path,
+                    source,
+                    &[key],
+                    format!("{key} must be {kind}"),
+                ));
                 continue;
             }
         } else {
-            diagnostics.push(diagnostic(path, source, &[key], format!("unknown policy field: {key}")));
+            diagnostics.push(diagnostic(
+                path,
+                source,
+                &[key],
+                format!("unknown policy field: {key}"),
+            ));
             continue;
         }
         if key == "profiles" {
@@ -52,9 +62,13 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
                 for (index, entry) in items.iter().enumerate() {
                     if !entry.is_str() {
                         let mut finding = Diagnostic::new(
-                            "CB001", format!("profiles[{index}] must be string"), path,
+                            "CB001",
+                            format!("profiles[{index}] must be string"),
+                            path,
                         );
-                        if let Some(span) = crate::toml_locations::policy_span(source, key, Some(index)) {
+                        if let Some(span) =
+                            crate::toml_locations::policy_span(source, key, Some(index))
+                        {
                             finding = finding.with_span(source, &span);
                         }
                         diagnostics.push(finding);
@@ -71,9 +85,19 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
             if let Some(entries) = value.as_table() {
                 for (field, entry) in entries {
                     if !allowed.contains(&field.as_str()) {
-                        diagnostics.push(diagnostic(path, source, &[key, field], format!("unknown {key} field: {field}")));
+                        diagnostics.push(diagnostic(
+                            path,
+                            source,
+                            &[key, field],
+                            format!("unknown {key} field: {field}"),
+                        ));
                     } else if !entry.is_bool() {
-                        diagnostics.push(diagnostic(path, source, &[key, field], format!("{key}.{field} must be boolean")));
+                        diagnostics.push(diagnostic(
+                            path,
+                            source,
+                            &[key, field],
+                            format!("{key}.{field} must be boolean"),
+                        ));
                     }
                 }
             }
@@ -92,7 +116,9 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
                             };
                             if let Some(message) = message {
                                 let mut finding = Diagnostic::new("CB001", message, path);
-                                if let Some(span) = crate::toml_locations::rule_field_span(source, index, field) {
+                                if let Some(span) =
+                                    crate::toml_locations::rule_field_span(source, index, field)
+                                {
                                     finding = finding.with_span(source, &span);
                                 }
                                 diagnostics.push(finding);
@@ -100,16 +126,27 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
                         }
                         for required in ["from", "disallow"] {
                             if !fields.contains_key(required) {
-                                let mut finding = Diagnostic::new("CB001", format!("dependency_rule[{index}] missing {required}"), path);
-                                if let Some(span) = crate::toml_locations::rule_span(source, index) {
+                                let mut finding = Diagnostic::new(
+                                    "CB001",
+                                    format!("dependency_rule[{index}] missing {required}"),
+                                    path,
+                                );
+                                if let Some(span) = crate::toml_locations::rule_span(source, index)
+                                {
                                     finding = finding.with_span(source, &span);
                                 }
                                 diagnostics.push(finding);
                             }
                         }
                     } else {
-                        let mut finding = Diagnostic::new("CB001", format!("dependency_rule[{index}] must be table"), path);
-                        if let Some(span) = crate::toml_locations::policy_span(source, key, Some(index)) {
+                        let mut finding = Diagnostic::new(
+                            "CB001",
+                            format!("dependency_rule[{index}] must be table"),
+                            path,
+                        );
+                        if let Some(span) =
+                            crate::toml_locations::policy_span(source, key, Some(index))
+                        {
                             finding = finding.with_span(source, &span);
                         }
                         diagnostics.push(finding);
