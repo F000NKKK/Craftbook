@@ -95,6 +95,8 @@ pub struct DependencyViolation {
     pub rule_index: usize,
     pub config_line: Option<usize>,
     pub manifest_line: Option<usize>,
+    pub manifest_column: Option<usize>,
+    pub config_column: Option<usize>,
     pub manifest_end: Option<(usize, usize)>,
     pub config_end: Option<(usize, usize)>,
 }
@@ -206,8 +208,10 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
                     config,
                     rule_index,
                     config_line: config_position.map(|(start, _)| start.0),
+                    config_column: config_position.map(|(start, _)| start.1),
                     config_end: config_position.map(|(_, end)| end),
                     manifest_line: manifest_position.map(|(start, _)| start.0),
+                    manifest_column: manifest_position.map(|(start, _)| start.1),
                     manifest_end: manifest_position.map(|(_, end)| end),
                 });
             }
