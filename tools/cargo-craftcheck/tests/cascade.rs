@@ -623,3 +623,40 @@ fn relative_manifest_path_matches_absolute_path() {
     assert_eq!(relative.stdout, absolute.stdout);
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn malformed_ancestor_is_reported_at_its_own_source_location() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-ancestor-syntax-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\nproject = [\n",
+    );
+    write(
+        &directory.join("nested/CraftBook.toml"),
+        "profiles = ['simple']\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
+        .args(["check", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let result: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let diagnostics = result["diagnostics"].as_array().unwrap();
+    assert_eq!(diagnostics.len(), 1);
+    assert!(
+        diagnostics[0]["path"]
+            .as_str()
+            .unwrap()
+            .replace('\\', "/")
+            .ends_with("/CraftBook.toml")
+    );
+    assert!(!diagnostics[0]["path"].as_str().unwrap().replace('\\', "/").contains("/nested/"));
+    assert!(diagnostics[0]["line"].as_u64().is_some());
+    fs::remove_dir_all(&directory).unwrap();
+}
