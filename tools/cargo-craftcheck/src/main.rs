@@ -190,11 +190,13 @@ fn run() -> Result<(), String> {
     }
 
     let cwd = env::current_dir().map_err(|e| e.to_string())?;
-    let root_config = match config {
+    let selected = match config {
         Some(path) => path,
         None => cargo_craftcheck::scopes::nearest(&cwd)
             .ok_or("CraftBook.toml not found in the current directory or parents")?,
     };
+    let root_config = std::fs::canonicalize(&selected)
+        .map_err(|error| format!("{}: {error}", selected.display()))?;
     if root_config
         .file_name()
         .is_none_or(|name| name != "CraftBook.toml")
@@ -235,7 +237,8 @@ fn run() -> Result<(), String> {
 
     if command == "deps" {
         let manifests = match manifest {
-            Some(path) => vec![path],
+            Some(path) => vec![std::fs::canonicalize(&path)
+                .map_err(|error| format!("{}: {error}", path.display()))?],
             None => cargo_craftcheck::scopes::discover(root, "Cargo.toml")?,
         };
         if manifests.is_empty() {
@@ -282,7 +285,18 @@ fn run() -> Result<(), String> {
             }
         }
     }
-    let root_absolute = std::fs::canonicalize(root).map_err(|error| error.to_string())?;
+    diagnostics.sort_by(|a, b| {
+        a.path.cmp(&b.path)
+            .then(a.line.cmp(&b.line))
+            .then(a.column.cmp(&b.column))
+            .then(a.rule_id.cmp(&b.rule_id))
+            .then(a.message.cmp(&b.message))
+    });
+    diagnostics.dedup_by(|a, b| {
+        a.path == b.path && a.line == b.line && a.column == b.column
+            && a.rule_id == b.rule_id && a.message == b.message
+    });
+    let root_absolute = root.to_path_buf();
     let output = render_with_root(format, &diagnostics, &root_absolute)?;
     if format == Format::Text {
         if diagnostics.is_empty() {
