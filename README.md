@@ -114,9 +114,7 @@ Choose combinations based on invariants and tradeoffs. See [architecture guidanc
 
 ## 👩‍💻 Development
 
-Craftbook v2 evolves alongside real Rust code. Review chapter updates together with examples and tool behavior. The native checker has a [dedicated CI workflow](.github/workflows/craftbook-v2.yml); its successful execution is not implied by the existence of the workflow.
 
-Moving from v1? Read the [migration guide](MIGRATION.md) ([на русском](MIGRATION.ru.md)). The Python v1 tools have been removed from `main`; retrieve them from the `v1` or `v2-rc0` tags.
 
 Craftbook is a handbook, not a correctness proof: project requirements, measurements and code review still matter.
 
@@ -124,7 +122,6 @@ Craftbook is a handbook, not a correctness proof: project requirements, measurem
 
 <div align="center">
 
-[⬆ Back to top](#top) · [Русская версия](README.ru.md) · [Migration guide](MIGRATION.md)
 
 </div>
 
@@ -135,7 +132,3 @@ Nested `CraftBook.toml` files override parent settings; run `cargo craftcheck ch
 The native CLI can inspect inherited policy with `cargo craftcheck config` and show configuration sources with `cargo craftcheck explain`. Both commands operate on the current directory, without scanning unrelated sibling directories.
 
 Machine-readable checks: `cargo craftcheck check --format json` and `cargo craftcheck deps --format sarif` (SARIF 2.1.0). [Details](tools/cargo-craftcheck/README.md#structured-diagnostics).
-
-### v2-rc2 development
-
-Dependency diagnostics now retain the originating package manifest and the source `CraftBook.toml` rule (including its index). Nested workspace and inherited-rule regression tests are part of the Rust test suite. The published `v2-rc1` tag remains unchanged; these changes are on `main` pending CI verification.
