@@ -77,11 +77,25 @@
 Установите утилиту проверки политик Craftbook:
 
 ```bash
-cargo install cargo-craftcheck --version 2.0.0-rc7
+cargo install cargo-craftcheck --version 2.0.0-rc8
 cargo craftcheck check
 ```
 
 Утилита проверяет **конфигурацию политики** и явно заданные запреты прямых зависимостей Cargo Workspace; архитектуру исходного Rust-кода пока не анализирует.
+
+Для проверки в GitHub Actions:
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: dtolnay/rust-toolchain@stable
+  - uses: F000NKKK/Craftbook@v2.0.0-rc8
+    with:
+      command: both
+      report-format: sarif
+```
+
+Action по умолчанию прикрепляет отчёты к запуску workflow. В корне репозитория должен быть `CraftBook.toml`, либо путь к нему нужно указать через `config`.
 
 ## 🛠️ Инструменты
 
