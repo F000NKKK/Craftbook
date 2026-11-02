@@ -545,3 +545,28 @@ fn diagnostics_are_ordered_deterministically() {
     assert_eq!(report["diagnostics"].as_array().unwrap().len(), 3);
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn missing_required_field_is_not_hidden_by_unrelated_type_error() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-missing-key-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 'invalid'\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
+        .args(["check", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let diagnostics = report["diagnostics"].as_array().unwrap();
+    assert!(diagnostics.iter().any(|d| d["message"] == "version must be integer"));
+    assert!(diagnostics.iter().any(|d| d["message"].as_str().unwrap_or("").contains("missing field")));
+    fs::remove_dir_all(&directory).unwrap();
+}
