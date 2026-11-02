@@ -8,7 +8,7 @@ yanked = "deny"
 
 [licenses]
 version = 2
-# Allow-list policy (owner decision, 2026-10-28): every permissive licence whose
+# Allow-list policy: every permissive licence whose
 # only obligation is to keep the copyright notice / licence text is allowed.
 # Copyleft (GPL, LGPL, AGPL, EUPL, ...) and licences with other obligations
 # (SSPL, BUSL, "non-commercial") stay denied. Add a licence here by Craftbook PR,
