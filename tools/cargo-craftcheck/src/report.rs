@@ -283,6 +283,24 @@ mod tests {
     }
 
     #[test]
+    fn json_and_sarif_share_exact_source_coordinates() {
+        let source = "версия = 'bad'\r\n";
+        let offset = source.find("'bad'").unwrap();
+        let span = crate::source::SourceSpan::new(offset, offset + 5, source).unwrap();
+        let finding = Diagnostic::new("CB001", "invalid value", Path::new("CraftBook.toml"))
+            .with_span(source, &span);
+        let json: serde_json::Value = serde_json::from_str(&render(Format::Json, &[finding.clone()]).unwrap()).unwrap();
+        let sarif: serde_json::Value = serde_json::from_str(&render(Format::Sarif, &[finding]).unwrap()).unwrap();
+        let item = &json["diagnostics"][0];
+        let region = &sarif["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"];
+        assert_eq!(json["schemaVersion"], 1);
+        assert_eq!(item["line"], region["startLine"]);
+        assert_eq!(item["column"], region["startColumn"]);
+        assert_eq!(item["end_line"], region["endLine"]);
+        assert_eq!(item["end_column"], region["endColumn"]);
+    }
+
+    #[test]
     fn unknown_format_is_rejected() {
         assert!(Format::parse("xml").is_err());
     }
