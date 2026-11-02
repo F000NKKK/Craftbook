@@ -50,7 +50,7 @@ jobs:
           python3 -m unittest discover -s .github/scripts -p 'test_*.py'
           python3 .github/scripts/prepare_release.py --bump "$BUMP" --channel "$CHANNEL" --output "$GITHUB_OUTPUT"
           cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml --locked
-          cargo package --manifest-path tools/cargo-craftcheck/Cargo.toml --locked --allow-dirty
+          cargo package --manifest-path tools/cargo-craftcheck/Cargo.toml --locked
       - name: Commit and tag prepared release
         env:
           RELEASE_TAG: ${{ steps.prepare.outputs.tag }}
