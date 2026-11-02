@@ -4,6 +4,9 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
+- CI template includes an optional `cargo-craftcheck` policy/dependency job with downloadable JSON and SARIF reports.
+- Policy template documents nested overrides and opt-in dependency rules; repository CI validates shipped templates.
+
 - Self-check analyzes repository configurations only; invalid-input fixtures remain in automated tests.
 - Effective configuration output is valid TOML, verified by an integration test and repository CI self-check.
 - Downloadable self-check artifacts contain actual repository policy/dependency reports, effective configuration, provenance and exit codes.
