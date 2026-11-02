@@ -684,7 +684,11 @@ fn effective_config_is_valid_toml() {
         .current_dir(&directory)
         .output()
         .unwrap();
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let document = String::from_utf8(output.stdout).unwrap();
     let value: toml::Value = toml::from_str(&document).unwrap();
     assert_eq!(value["version"].as_integer(), Some(2));
