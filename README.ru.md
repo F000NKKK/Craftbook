@@ -77,7 +77,7 @@
 Установи опубликованный релиз-кандидат утилиты проверки политики:
 
 ```bash
-cargo install cargo-craftcheck --version 2.0.0-rc6
+cargo install cargo-craftcheck --version 2.0.0-rc7
 cargo craftcheck check
 ```
 
