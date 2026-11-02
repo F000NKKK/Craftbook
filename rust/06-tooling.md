@@ -9,16 +9,18 @@ Run Miri for relevant unsafe code, fuzzers for untrusted input, sanitizers where
 `cargo deny` and advisory checks support project-specific license and supply-chain policy. Library versus application lockfile practices follow Cargo and deployment needs; `--locked` protects reproducible application builds.
 
 
-Example: `python3 tools/craftcheck_v2.py templates/CraftBook.toml`.
-
 A hard CI gate needs a demonstrable correctness, security, compatibility or declared project-contract reason. Arbitrary line limits, naming blacklists and test percentages are advisory signals, not universal failures.
 
 ## Native Cargo subcommand
 
+```sh
+cargo craftcheck check --config CraftBook.toml
+cargo craftcheck deps --format sarif
+```
 
 ### Dependency policies (experimental)
 
-`cargo craftcheck deps --config CraftBook.toml --manifest-path Cargo.toml` checks optional `[[dependency_rule]]` entries against direct workspace dependencies resolved by Cargo Metadata. Each entry supplies `from` and `disallow` package names. No dependency direction is imposed unless the project specifies it. The current output is human-readable; it is not yet JSON or SARIF.
+`cargo craftcheck deps --config CraftBook.toml --manifest-path Cargo.toml` checks optional `[[dependency_rule]]` entries against direct workspace dependencies resolved by Cargo Metadata. Each entry supplies `from` and `disallow` package names. No dependency direction is imposed unless the project specifies it. The command supports text, JSON and SARIF 2.1.0 diagnostics.
 
 ### Hierarchical `CraftBook.toml`
 
