@@ -36,6 +36,7 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
         ("assurance", "table"),
         ("constraints", "table"),
         ("architecture", "table"),
+        ("package", "array"),
         ("dependency_rule", "array"),
     ];
     for (key, value) in &table {
