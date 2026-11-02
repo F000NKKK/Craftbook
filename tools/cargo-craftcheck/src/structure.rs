@@ -74,7 +74,7 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
             }
         }
         if key == "assurance" || key == "constraints" || key == "architecture" {
-            let allowed: &[&str] = match key {
+            let allowed: &[&str] = match key.as_str() {
                 "assurance" => &["format", "clippy", "test", "docs"],
                 "architecture" => &["require_classification"],
                 _ => &["no_std", "public_api_stable", "unsafe_review_required"],
