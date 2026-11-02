@@ -299,6 +299,7 @@ fn run() -> Result<(), String> {
                             violation.rule_index + 1,
                             violation.config.display()
                         );
+                        let message = violation.description.clone().map(|description| format!("{}: {} -> {}: {}", violation.rule_id.as_deref().unwrap_or("CB002"), violation.from, violation.disallow, description)).unwrap_or(message);
                         let mut diagnostic = Diagnostic::new("CB002", message, &violation.manifest)
                             .with_rule(&violation.config, violation.rule_index)
                             .with_rule_line(violation.config_line)
