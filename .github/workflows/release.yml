@@ -6,35 +6,83 @@ on:
       - 'v[0-9]*'
   workflow_dispatch:
     inputs:
-      tag:
-        description: Existing version tag to publish
+      bump:
+        description: Version increment (current continues prerelease number)
         required: true
-        type: string
+        type: choice
+        default: current
+        options: [current, patch, minor, major]
+      channel:
+        description: Release channel
+        required: true
+        type: choice
+        default: rc
+        options: [alpha, beta, rc, stable]
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  group: craftbook-release
   cancel-in-progress: false
 
 jobs:
+  prepare:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.prepare.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Prepare release versions and close Unreleased
+        id: prepare
+        env:
+          BUMP: ${{ inputs.bump }}
+          CHANNEL: ${{ inputs.channel }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s .github/scripts -p 'test_*.py'
+          python3 .github/scripts/prepare_release.py --bump "$BUMP" --channel "$CHANNEL" --output "$GITHUB_OUTPUT"
+          cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml --locked
+          cargo package --manifest-path tools/cargo-craftcheck/Cargo.toml --locked
+      - name: Commit and tag prepared release
+        env:
+          RELEASE_TAG: ${{ steps.prepare.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md README.md README.ru.md action.yml tools/cargo-craftcheck/Cargo.toml tools/cargo-craftcheck/Cargo.lock tools/cargo-craftcheck/README.md
+          git commit -m "release: prepare $RELEASE_TAG"
+          git tag -a "$RELEASE_TAG" -m "Craftbook $RELEASE_TAG"
+          git push origin HEAD:main
+          git push origin "$RELEASE_TAG"
+
   publish:
+    needs: prepare
+    if: always() && (github.event_name == 'push' || needs.prepare.result == 'success')
     runs-on: ubuntu-latest
     environment: release
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.inputs.tag || github.ref_name }}
+          ref: ${{ needs.prepare.outputs.tag || github.ref_name }}
       - name: Validate release version
         id: version
         env:
-          RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag || github.ref_name }}
         shell: bash
         run: |
           set -euo pipefail
-          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$ ]]; then
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)[0-9]+)?$ ]]; then
             echo "::error::Invalid version tag $RELEASE_TAG"
             exit 1
           fi
@@ -46,7 +94,7 @@ jobs:
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          if [[ "$version" == *-rc* ]]; then
+          if [[ "$version" == *-alpha* || "$version" == *-beta* || "$version" == *-rc* ]]; then
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
@@ -58,7 +106,7 @@ jobs:
           cargo package --manifest-path tools/cargo-craftcheck/Cargo.toml --locked
       - name: Generate release notes
         env:
-          RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag || github.ref_name }}
         run: python3 .github/scripts/release_notes.py --tag "$RELEASE_TAG" --output "$RUNNER_TEMP/release-notes.md"
       - name: Publish crate if not already published
         env:
@@ -79,7 +127,7 @@ jobs:
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag || github.ref_name }}
           PRERELEASE: ${{ steps.version.outputs.prerelease }}
         shell: bash
         run: |
