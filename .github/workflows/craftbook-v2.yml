@@ -46,3 +46,17 @@ jobs:
         run: |
           cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- deps --format sarif > craftcheck.sarif
           jq -e '.version == "2.1.0" and (.runs | length == 1)' craftcheck.sarif
+
+  portability:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Cross-platform tests
+        run: cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
