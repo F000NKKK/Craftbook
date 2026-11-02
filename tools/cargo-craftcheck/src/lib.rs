@@ -104,10 +104,13 @@ pub fn validate(policy: &Policy) -> Vec<String> {
                 errors.push(format!("invalid CEL dependency condition: {error}"));
             }
             if rule.action.as_deref().unwrap_or("deny") != "deny" {
-                errors.push("conditional dependency rules currently require action = deny".to_owned());
+                errors.push(
+                    "conditional dependency rules currently require action = deny".to_owned(),
+                );
             }
         } else if rule.from.trim().is_empty() || rule.disallow.trim().is_empty() {
-            errors.push("dependency rules require from/disallow or a CEL when condition".to_owned());
+            errors
+                .push("dependency rules require from/disallow or a CEL when condition".to_owned());
         }
     }
     errors
