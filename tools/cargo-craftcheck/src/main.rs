@@ -45,7 +45,7 @@ fn semantic_diagnostics(policy: &cargo_craftcheck::Policy, directory: &Path) -> 
         }
     }
     for (index, rule) in policy.dependency_rule.iter().enumerate() {
-        if rule.from.trim().is_empty() || rule.disallow.trim().is_empty() {
+        if rule.when.is_none() && (rule.from.trim().is_empty() || rule.disallow.trim().is_empty()) {
             issues.push((
                 "dependency_rule",
                 Some(index),
