@@ -95,7 +95,7 @@ cargo clippy --all-targets --manifest-path tools/cargo-craftcheck/Cargo.toml -- 
 cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
 ```
 
-Конфигурации: [политика самого Craftbook](CraftBook.toml) · [пример политики](templates/CraftBook.toml) · [правила workspace](templates/WorkspaceLints.toml) · [Clippy](templates/Clippy.toml) · [rustfmt](templates/Rustfmt.toml) · [шаблон CI](templates/ci.yml).
+Конфигурации: [политика самого Craftbook](CraftBook.toml) · [пример политики](templates/CraftBook.toml) · [правила workspace](templates/workspace-lints.toml) · [Clippy](templates/clippy.toml) · [rustfmt](templates/rustfmt.toml) · [шаблон CI](templates/ci.yml).
 
 ## 🏗️ Архитектура
 
@@ -139,5 +139,3 @@ Craftbook — инженерный справочник, а не формаль�
 ### Разработка v2-rc2
 
 Диагностика зависимостей теперь указывает манифест пакета-источника и применённое правило из `CraftBook.toml` вместе с его индексом. Добавлены регрессионные проверки вложенных Workspace и унаследованных правил. Опубликованный тег `v2-rc1` не изменяется; новые изменения находятся в `main` до подтверждения CI.
-
-Имена файлов шаблонов приведены к PascalCase. При установке конфигураций копируйте их под именами, которые ожидают инструменты (например, `clippy.toml`, `rustfmt.toml`, `deny.toml`); Cargo требует `Cargo.toml`.
