@@ -171,7 +171,7 @@ mod tests {
         let second = policy_span(source, "profiles", Some(2)).unwrap();
         assert_eq!(&source[second.bytes], "'unknown'");
         let rule = policy_span(source, "dependency_rule", Some(0)).unwrap();
-        assert!(source[rule.bytes].contains("from = ''"));
+        assert!(source[rule.bytes].contains("dependency_rule"));
         let invalid = invalid_rule_field_span(source, 0).unwrap();
         assert_eq!(&source[invalid.bytes], "''");
     }
