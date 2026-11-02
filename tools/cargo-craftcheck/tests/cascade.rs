@@ -758,3 +758,34 @@ fn cli_exit_codes_and_format_contract_are_stable() {
 
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn invalid_cargo_manifest_is_reported_without_panicking() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-cargo-failure-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\nproject = 'fixture'\n",
+    );
+    write(&directory.join("Cargo.toml"), "[package\n");
+    let output = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
+        .args(["deps", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["success"], false);
+    assert!(
+        report["diagnostics"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["rule_id"] == "CB003")
+    );
+    fs::remove_dir_all(&directory).unwrap();
+}
