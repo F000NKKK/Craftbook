@@ -56,7 +56,7 @@ pub struct DependencyRule {
 }
 
 impl DependencyRule {
-    fn matches(&self, source: &Package, target: &Package) -> Result<bool, String> {
+    fn matches(&self, source: &Package, target: &Package, policy: &crate::Policy) -> Result<bool, String> {
         if let Some(expression) = &self.when {
             let program = cel::Program::compile(expression)
                 .map_err(|error| format!("invalid CEL expression: {error}"))?;
@@ -267,7 +267,7 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
                 continue;
             };
             for rule in &policy.dependency_rule {
-                if !rule.matches(package, target)? {
+                if !rule.matches(package, target, &policy)? {
                     continue;
                 }
                 let (config, rule_index, config_position) =
@@ -369,7 +369,7 @@ pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
                 continue;
             };
             for rule in &policy.dependency_rule {
-                if !rule.matches(package, target)? {
+                if !rule.matches(package, target, &policy)? {
                     continue;
                 }
                 findings.push(format!(
@@ -460,12 +460,12 @@ message = "forbidden"
         ])).unwrap();
         assert!(
             policy.dependency_rule[0]
-                .matches(&packages[0], &packages[1])
+                .matches(&packages[0], &packages[1], &policy)
                 .unwrap()
         );
         assert!(
             !policy.dependency_rule[0]
-                .matches(&packages[1], &packages[0])
+                .matches(&packages[1], &packages[0], &policy)
                 .unwrap()
         );
     }
