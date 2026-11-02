@@ -402,6 +402,25 @@ mod tests {
     }"#;
 
     #[test]
+    fn cel_rule_reads_cargo_package_metadata() {
+        let policy: crate::Policy = crate::parse(r#"
+version = 2
+project = "test"
+[[dependency_rule]]
+id = "ARCH001"
+when = 'from.layer == "domain" && to.layer == "infra"'
+action = "deny"
+message = "forbidden"
+"#).unwrap();
+        let packages: Vec<Package> = serde_json::from_value(serde_json::json!([
+            {"id":"a", "name":"example-domain", "metadata":{"craftbook":{"layer":"domain","context":"example"}}},
+            {"id":"b", "name":"example-infra", "metadata":{"craftbook":{"layer":"infra","context":"example"}}}
+        ])).unwrap();
+        assert!(policy.dependency_rule[0].matches(&packages[0], &packages[1]).unwrap());
+        assert!(!policy.dependency_rule[0].matches(&packages[1], &packages[0]).unwrap());
+    }
+
+    #[test]
     fn catches_forbidden_direct_workspace_edge() {
         let rules = vec![DependencyRule {
             from: "a".into(),
