@@ -109,12 +109,22 @@ fn check_policy_tree(root: &Path, verbose: bool) -> Result<Vec<Diagnostic>, Stri
                 continue;
             }
         };
+        // Validate each source document once, with its own exact coordinates.
+        if let Ok(source) = std::fs::read_to_string(&path) {
+            findings.extend(cargo_craftcheck::structure::inspect(&path, &source));
+        }
         match merged.try_into() {
             Ok(policy) => {
                 let policy: cargo_craftcheck::Policy = policy;
                 findings.extend(semantic_diagnostics(&policy, dir));
             }
-            Err(error) => findings.push(Diagnostic::new("CB001", format!("{error}"), &path)),
+            Err(error) => {
+                // Structural validation already points to invalid declarations in
+                // the original file; keep the fallback for missing inherited keys.
+                if !findings.iter().any(|item| item.rule_id == "CB001" && item.path == path.display().to_string()) {
+                    findings.push(Diagnostic::new("CB001", format!("{error}"), &path));
+                }
+            },
         }
         if verbose {
             println!("Policy checked: {}", path.display());
