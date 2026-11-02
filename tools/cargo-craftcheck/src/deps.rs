@@ -512,7 +512,8 @@ message = "forbidden"
 
     #[test]
     fn cel_rules_use_package_glob_fallbacks() {
-        let policy = crate::parse(r#"
+        let policy = crate::parse(
+            r#"
 version=2
 project="fixture"
 [[package]]
@@ -526,12 +527,19 @@ context="example"
 [[dependency_rule]]
 when='from.layer == "domain" && to.layer == "infra"'
 action="deny"
-"#).unwrap();
+"#,
+        )
+        .unwrap();
         let packages: Vec<Package> = serde_json::from_value(serde_json::json!([
             {"id":"a","name":"example-domain"},
             {"id":"b","name":"example-infra"}
-        ])).unwrap();
-        assert!(policy.dependency_rule[0].matches(&packages[0], &packages[1], &policy).unwrap());
+        ]))
+        .unwrap();
+        assert!(
+            policy.dependency_rule[0]
+                .matches(&packages[0], &packages[1], &policy)
+                .unwrap()
+        );
     }
 
     #[test]
