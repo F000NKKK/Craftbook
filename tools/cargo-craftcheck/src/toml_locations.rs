@@ -34,6 +34,29 @@ pub fn policy_span(source: &str, field: &str, index: Option<usize>) -> Option<So
     }
 }
 
+/// Locate an effective policy field, including nested tables and individual rules.
+pub fn policy_path_span(source: &str, path: &[&str], index: Option<usize>) -> Option<SourceSpan> {
+    let doc = document(source)?;
+    let mut current = doc.as_item();
+    for part in path {
+        current = current.as_table_like()?.get(part)?;
+    }
+    match index {
+        None => span(source, current),
+        Some(index) if path == ["profiles"] => {
+            let value = current.as_array()?.get(index)?;
+            let range = value.span()?;
+            SourceSpan::new(range.start, range.end, source)
+        }
+        Some(index) if path == ["dependency_rule"] => {
+            let table = current.as_array_of_tables()?.get(index)?;
+            let range = table.span()?;
+            SourceSpan::new(range.start, range.end, source)
+        }
+        Some(_) => None,
+    }
+}
+
 /// Locate the first invalid (empty) dependency-rule field, if present.
 pub fn invalid_rule_field_span(source: &str, index: usize) -> Option<SourceSpan> {
     let doc = document(source)?;
