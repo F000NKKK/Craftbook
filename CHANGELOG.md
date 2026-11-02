@@ -4,6 +4,9 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
+- Updated English and Russian root READMEs with crates.io version, docs.rs, downloads, CI, license and supported-platform badges, matching the presentation used in Yog, Meridian and Substrate.
+- Documented installation of the published `cargo-craftcheck` `2.0.0-rc6` release candidate in both root READMEs.
+
 ## v2-rc6 — 2026-11-02
 
 - Audited CLI subcommands, option errors and exit codes with integration regression coverage.
