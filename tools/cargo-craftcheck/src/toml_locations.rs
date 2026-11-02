@@ -38,7 +38,7 @@ pub fn policy_span(source: &str, field: &str, index: Option<usize>) -> Option<So
 pub fn policy_path_span(source: &str, path: &[&str], index: Option<usize>) -> Option<SourceSpan> {
     let doc = document(source)?;
     let (first, rest) = path.split_first()?;
-    let mut current = doc.as_table().get(*first)?;
+    let mut current = doc.as_table().get(first)?;
     for part in rest {
         current = current.as_table_like()?.get(part)?;
     }
@@ -56,6 +56,13 @@ pub fn policy_path_span(source: &str, path: &[&str], index: Option<usize>) -> Op
         }
         Some(_) => None,
     }
+}
+
+/// Locate a field in one table of dependency-rule declarations.
+pub fn rule_field_span(source: &str, index: usize, field: &str) -> Option<SourceSpan> {
+    let doc = document(source)?;
+    let table = doc.as_table().get("dependency_rule")?.as_array_of_tables()?.get(index)?;
+    span(source, table.get(field)?)
 }
 
 /// Locate the first invalid (empty) dependency-rule field, if present.
