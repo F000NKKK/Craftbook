@@ -72,7 +72,12 @@ fn classified(package: &Package, policy: &crate::Policy) -> serde_json::Value {
 }
 
 impl DependencyRule {
-    fn matches(&self, source: &Package, target: &Package, policy: &crate::Policy) -> Result<bool, String> {
+    fn matches(
+        &self,
+        source: &Package,
+        target: &Package,
+        policy: &crate::Policy,
+    ) -> Result<bool, String> {
         if let Some(expression) = &self.when {
             let program = cel::Program::compile(expression)
                 .map_err(|error| format!("invalid CEL expression: {error}"))?;
