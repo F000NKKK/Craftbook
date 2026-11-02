@@ -9,3 +9,4 @@ Craftbook is a Rust engineering handbook, not a DDD-only template.
 - DDD, ports/adapters, CQRS and layers are optional profiles. Never force these on kernels, games or simple libraries.
 - Changes to tooling must include tests and maintain documented compatibility contracts.
 - The only supported checker is native Rust `cargo-craftcheck`. Maintain the root and nested `CraftBook.toml` files and require self-check CI.
+- Keep release history, change summaries, version-to-version comparisons and future roadmaps exclusively in `CHANGELOG.md`. Other files describe only current behavior and binding requirements; do not append development notes or release plans.
