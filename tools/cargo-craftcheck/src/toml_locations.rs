@@ -14,6 +14,26 @@ fn span(source: &str, item: &Item) -> Option<SourceSpan> {
     SourceSpan::new(range.start, range.end, source)
 }
 
+/// Locate a policy value or an individual array element in the parsed TOML document.
+pub fn policy_span(source: &str, field: &str, index: Option<usize>) -> Option<SourceSpan> {
+    let doc = document(source)?;
+    let item = doc.as_table().get(field)?;
+    match index {
+        None => span(source, item),
+        Some(index) if field == "profiles" => {
+            let value = item.as_value()?.as_array()?.get(index)?;
+            let range = value.span()?;
+            SourceSpan::new(range.start, range.end, source)
+        }
+        Some(index) if field == "dependency_rule" => {
+            let table = item.as_array_of_tables()?.get(index)?;
+            let range = table.span()?;
+            SourceSpan::new(range.start, range.end, source)
+        }
+        Some(_) => None,
+    }
+}
+
 /// Returns the value span for one unambiguous direct Cargo dependency declaration.
 pub fn dependency_span(manifest: &Path, package: &str) -> Option<SourceSpan> {
     let source = std::fs::read_to_string(manifest).ok()?;
