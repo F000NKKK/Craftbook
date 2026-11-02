@@ -4,6 +4,8 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
+## v2-rc6 — 2026-11-02
+
 - Audited CLI subcommands, option errors and exit codes with integration regression coverage.
 - Added a structured-diagnostic regression for malformed Cargo manifests (CB003) without a process panic.
 - Documented current CLI, JSON schema v1, SARIF 2.1.0, coordinates and output guarantees.
