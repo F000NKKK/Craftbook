@@ -97,6 +97,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn locates_exact_semantic_field_and_element_ranges() {
+        let source = "version = 1\r\nproject = '  '\r\nprofiles = ['simple', 'unknown', 'unknown']\r\n[[dependency_rule]]\r\nfrom = ''\r\ndisallow = 'api'\r\n";
+        let version = policy_span(source, "version", None).unwrap();
+        assert_eq!(&source[version.bytes], "1");
+        let project = policy_span(source, "project", None).unwrap();
+        assert_eq!(&source[project.bytes], "'  '");
+        let second = policy_span(source, "profiles", Some(2)).unwrap();
+        assert_eq!(&source[second.bytes], "'unknown'");
+        let rule = policy_span(source, "dependency_rule", Some(0)).unwrap();
+        assert!(source[rule.bytes].contains("from = ''"));
+    }
+
+    #[test]
     fn finds_aliased_and_target_specific_dependencies() {
         let text = "[target.'cfg(unix)'.dependencies]\nrenamed = { package = 'core', path = '../core' }\n";
         let result = dependency_span_in(text, "core").unwrap();
