@@ -166,17 +166,38 @@ mod tests {
             ("assurance = false", "assurance must be table"),
             ("constraints = 12", "constraints must be table"),
             ("dependency_rule = 'no'", "dependency_rule must be array"),
-            ("[assurance]\nformat = 3", "assurance.format must be boolean"),
+            (
+                "[assurance]\nformat = 3",
+                "assurance.format must be boolean",
+            ),
             ("[assurance]\ndocs = 3", "assurance.docs must be boolean"),
-            ("[constraints]\nno_std = 3", "constraints.no_std must be boolean"),
-            ("[constraints]\npublic_api_stable = 3", "constraints.public_api_stable must be boolean"),
-            ("[constraints]\nunsafe_review_required = 3", "constraints.unsafe_review_required must be boolean"),
-            ("dependency_rule = [{ from = 7, disallow = 'api' }]", "dependency_rule[0].from must be string"),
-            ("dependency_rule = [{ from = 'api', disallow = false }]", "dependency_rule[0].disallow must be string"),
+            (
+                "[constraints]\nno_std = 3",
+                "constraints.no_std must be boolean",
+            ),
+            (
+                "[constraints]\npublic_api_stable = 3",
+                "constraints.public_api_stable must be boolean",
+            ),
+            (
+                "[constraints]\nunsafe_review_required = 3",
+                "constraints.unsafe_review_required must be boolean",
+            ),
+            (
+                "dependency_rule = [{ from = 7, disallow = 'api' }]",
+                "dependency_rule[0].from must be string",
+            ),
+            (
+                "dependency_rule = [{ from = 'api', disallow = false }]",
+                "dependency_rule[0].disallow must be string",
+            ),
         ];
         for (source, expected) in cases {
             let findings = inspect(Path::new("CraftBook.toml"), source);
-            let finding = findings.iter().find(|d| d.message == expected).unwrap_or_else(|| panic!("missing {expected} for {source}"));
+            let finding = findings
+                .iter()
+                .find(|d| d.message == expected)
+                .unwrap_or_else(|| panic!("missing {expected} for {source}"));
             assert!(finding.line.is_some(), "{expected}");
             assert!(finding.column.is_some(), "{expected}");
             assert!(finding.end_line.is_some(), "{expected}");
