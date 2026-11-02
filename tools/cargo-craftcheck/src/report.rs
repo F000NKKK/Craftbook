@@ -157,7 +157,14 @@ pub fn render_with_root(
     match format {
         Format::Text => Ok(findings
             .iter()
-            .map(|item| format!("{}: [{}] {}", item.path, item.rule_id, item.message))
+            .map(|item| {
+                let location = match (item.line, item.column) {
+                    (Some(line), Some(column)) => format!("{}:{line}:{column}", item.path),
+                    (Some(line), None) => format!("{}:{line}", item.path),
+                    _ => item.path.clone(),
+                };
+                format!("{location}: [{}] {}", item.rule_id, item.message)
+            })
             .collect::<Vec<_>>()
             .join("\n")),
         Format::Json => serde_json::to_string_pretty(&serde_json::json!({
