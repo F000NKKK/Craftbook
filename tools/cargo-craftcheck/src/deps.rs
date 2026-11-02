@@ -245,12 +245,21 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
         }
         if policy.architecture.require_classification {
             let metadata = package.metadata.get("craftbook");
-            let is_classified = metadata.is_some_and(|value|
-                value.get("layer").and_then(serde_json::Value::as_str).is_some_and(|layer| !layer.is_empty())
-                && value.get("context").and_then(serde_json::Value::as_str).is_some_and(|context| !context.is_empty())
-            );
+            let is_classified = metadata.is_some_and(|value| {
+                value
+                    .get("layer")
+                    .and_then(serde_json::Value::as_str)
+                    .is_some_and(|layer| !layer.is_empty())
+                    && value
+                        .get("context")
+                        .and_then(serde_json::Value::as_str)
+                        .is_some_and(|context| !context.is_empty())
+            });
             if !is_classified {
-                return Err(format!("workspace package {} lacks [package.metadata.craftbook] layer/context classification", package.name));
+                return Err(format!(
+                    "workspace package {} lacks [package.metadata.craftbook] layer/context classification",
+                    package.name
+                ));
             }
         }
         for edge in node.deps {
@@ -338,12 +347,21 @@ pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
         }
         if policy.architecture.require_classification {
             let metadata = package.metadata.get("craftbook");
-            let is_classified = metadata.is_some_and(|value|
-                value.get("layer").and_then(serde_json::Value::as_str).is_some_and(|layer| !layer.is_empty())
-                && value.get("context").and_then(serde_json::Value::as_str).is_some_and(|context| !context.is_empty())
-            );
+            let is_classified = metadata.is_some_and(|value| {
+                value
+                    .get("layer")
+                    .and_then(serde_json::Value::as_str)
+                    .is_some_and(|layer| !layer.is_empty())
+                    && value
+                        .get("context")
+                        .and_then(serde_json::Value::as_str)
+                        .is_some_and(|context| !context.is_empty())
+            });
             if !is_classified {
-                return Err(format!("workspace package {} lacks [package.metadata.craftbook] layer/context classification", package.name));
+                return Err(format!(
+                    "workspace package {} lacks [package.metadata.craftbook] layer/context classification",
+                    package.name
+                ));
             }
         }
         for edge in node.deps {
