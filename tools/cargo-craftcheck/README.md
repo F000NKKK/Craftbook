@@ -4,11 +4,19 @@ A native Rust checker for Craftbook project policies and Cargo workspace depende
 
 ## Installation
 
-From the repository root:
+Install the published checker using Cargo:
 
 ```sh
-cargo install --path tools/cargo-craftcheck
+cargo install cargo-craftcheck --version 2.0.0-rc8 --locked
 ```
+
+Run it from a project containing a `CraftBook.toml` policy:
+
+```sh
+cargo craftcheck check
+```
+
+For GitHub Actions, use `F000NKKK/Craftbook@v2.0.0-rc8` with a checkout and Rust toolchain setup. The Action runs `check`, `deps`, or both, and can upload JSON, SARIF, or text reports.
 
 ## Commands
 
