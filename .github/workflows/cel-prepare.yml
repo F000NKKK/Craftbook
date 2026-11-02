@@ -1,0 +1,30 @@
+name: Prepare CEL feature branch
+on:
+  push:
+    branches: ['feature/cel-policy-v2']
+permissions:
+  contents: write
+jobs:
+  prepare:
+    if: github.repository == 'F000NKKK/Craftbook'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/cel-policy-v2
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Regenerate dependency lockfile and format Rust
+        run: |
+          cargo generate-lockfile --manifest-path tools/cargo-craftcheck/Cargo.toml
+          cargo fmt --all --manifest-path tools/cargo-craftcheck/Cargo.toml
+      - name: Commit generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/cargo-craftcheck/Cargo.lock tools/cargo-craftcheck/src
+          if ! git diff --cached --quiet; then
+            git commit -m "build: synchronize CEL lockfile and Rust formatting"
+            git push origin HEAD:feature/cel-policy-v2
+          fi
