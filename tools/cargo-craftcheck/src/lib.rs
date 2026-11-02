@@ -44,7 +44,40 @@ pub struct Policy {
     #[serde(default)]
     pub architecture: Architecture,
     #[serde(default)]
+    pub package: Vec<PackageSelector>,
+    #[serde(default)]
     pub dependency_rule: Vec<deps::DependencyRule>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PackageSelector {
+    #[serde(rename = "match")]
+    pub pattern: String,
+    #[serde(default)]
+    pub layer: Option<String>,
+    #[serde(default)]
+    pub context: Option<String>,
+    #[serde(default)]
+    pub tags: Vec<String>,
+}
+
+impl PackageSelector {
+    pub fn matches(&self, name: &str) -> bool {
+        let parts: Vec<&str> = self.pattern.split('*').collect();
+        if parts.len() == 1 {
+            return self.pattern == name;
+        }
+        if !name.starts_with(parts[0]) {
+            return false;
+        }
+        let mut remainder = &name[parts[0].len()..];
+        for middle in &parts[1..parts.len() - 1] {
+            let Some(position) = remainder.find(middle) else { return false };
+            remainder = &remainder[position + middle.len()..];
+        }
+        remainder.ends_with(parts[parts.len() - 1])
+    }
 }
 
 #[derive(Debug, Default, Deserialize)]
