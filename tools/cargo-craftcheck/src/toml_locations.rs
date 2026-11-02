@@ -37,8 +37,9 @@ pub fn policy_span(source: &str, field: &str, index: Option<usize>) -> Option<So
 /// Locate an effective policy field, including nested tables and individual rules.
 pub fn policy_path_span(source: &str, path: &[&str], index: Option<usize>) -> Option<SourceSpan> {
     let doc = document(source)?;
-    let mut current = doc.as_item();
-    for part in path {
+    let (first, rest) = path.split_first()?;
+    let mut current = doc.as_table().get(*first)?;
+    for part in rest {
         current = current.as_table_like()?.get(part)?;
     }
     match index {
