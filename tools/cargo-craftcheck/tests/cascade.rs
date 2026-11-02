@@ -845,3 +845,50 @@ fn inline_dependency_rule_errors_have_exact_json_and_sarif_ranges() {
     );
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn nested_type_errors_are_independent_and_attributed_to_defining_file() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-nested-type-errors-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\nproject = 'fixture'\nprofiles = ['simple']\n",
+    );
+    write(
+        &directory.join("nested/CraftBook.toml"),
+        "profiles = ['simple', 17]\n[assurance]\nclippy = 'invalid'\n",
+    );
+
+    let output = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
+        .args(["check", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let diagnostics = report["diagnostics"].as_array().unwrap();
+    for (message, line) in [
+        ("profiles[1] must be string", 1),
+        ("assurance.clippy must be boolean", 3),
+    ] {
+        let finding = diagnostics
+            .iter()
+            .find(|item| item["message"] == message)
+            .unwrap_or_else(|| panic!("missing {message}"));
+        assert_eq!(finding["line"], line);
+        assert!(finding["column"].as_u64().is_some());
+        assert!(finding["end_column"].as_u64().is_some());
+        assert!(
+            finding["path"]
+                .as_str()
+                .unwrap()
+                .replace('\\', "/")
+                .ends_with("nested/CraftBook.toml")
+        );
+    }
+    fs::remove_dir_all(&directory).unwrap();
+}
