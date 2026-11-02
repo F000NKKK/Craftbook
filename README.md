@@ -14,7 +14,7 @@
 
 🇺🇸 **English** | 🇷🇺 [Русский](README.ru.md)
 
-[Overview](#-overview) · [Principles](#-principles) · [Handbook](#-handbook) · [Getting started](#-getting-started) · [Tooling](#-tooling) · [Architecture](#-architecture) · [Development](#-development)
+[Overview](#-overview) · [Principles](#-principles) · [Handbook](#-handbook) · [Getting started](#-getting-started) · [Tooling](#-tooling) · [Architecture](#-architecture) · [Development](#development)
 
 </div>
 
@@ -112,23 +112,6 @@ Craftbook adapts to the system rather than forcing every project into a layered 
 
 Choose combinations based on invariants and tradeoffs. See [architecture guidance](rust/07-architecture-ddd.md).
 
-## 👩‍💻 Development
+## Development
 
-
-
-Craftbook is a handbook, not a correctness proof: project requirements, measurements and code review still matter.
-
----
-
-<div align="center">
-
-
-</div>
-
-The native checker also offers an experimental opt-in dependency rule check: `cargo craftcheck deps --config CraftBook.toml --manifest-path Cargo.toml`. It uses Cargo Metadata and checks direct workspace dependencies only.
-
-Nested `CraftBook.toml` files override parent settings; run `cargo craftcheck check` or `cargo craftcheck deps` from any configured directory to check its subtree. [Configuration details](tools/cargo-craftcheck/README.md#hierarchical-configuration).
-
-The native CLI can inspect inherited policy with `cargo craftcheck config` and show configuration sources with `cargo craftcheck explain`. Both commands operate on the current directory, without scanning unrelated sibling directories.
-
-Machine-readable checks: `cargo craftcheck check --format json` and `cargo craftcheck deps --format sarif` (SARIF 2.1.0). [Details](tools/cargo-craftcheck/README.md#structured-diagnostics).
+The handbook does not replace project-specific requirements, measurement or code review.
