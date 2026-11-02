@@ -4,6 +4,15 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
+## v2.0.0-rc8 — 2026-11-02
+
+- Introduced the Craftbook composite GitHub Action for policy and Cargo workspace dependency checks, using the published cargo-craftcheck package.
+- Added configurable checker version, command, configuration path, report format, and optional artifact upload.
+- Added Action integration tests covering successful checks, SARIF artifact uploads, invalid policies, unsupported commands and formats, and missing configurations.
+- Isolated report directories between repeated Action invocations.
+- Validated the Action with CI and integration into the Substrate-Platform workspace.
+
+
 ## v2-rc7 — 2026-11-02
 
 - Extended source ranges for inline dependency rules and missing fields.
