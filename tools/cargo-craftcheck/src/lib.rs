@@ -42,7 +42,16 @@ pub struct Policy {
     #[serde(default)]
     pub constraints: Constraints,
     #[serde(default)]
+    pub architecture: Architecture,
+    #[serde(default)]
     pub dependency_rule: Vec<deps::DependencyRule>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Architecture {
+    #[serde(default)]
+    pub require_classification: bool,
 }
 
 #[derive(Debug, Default, Deserialize)]
