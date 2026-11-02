@@ -4,6 +4,9 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
+- CI self-check fixture verifies invalid-policy diagnostics in text, JSON and SARIF, including exact source coordinates.
+- Text diagnostics include source line and column; syntax errors inherited from parent configuration point to their defining file.
+
 - Canonical resolution of CLI configuration and manifest paths.
 - Stable ordering of diagnostics and regression tests for path equivalence and repeatability.
 
