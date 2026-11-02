@@ -97,13 +97,25 @@ fn check_policy_tree(root: &Path, verbose: bool) -> Result<Vec<Diagnostic>, Stri
             }
             Err(error) => {
                 let mut diagnostic = Diagnostic::new("CB001", error, &path);
-                if let Ok(source) = std::fs::read_to_string(&path)
-                    && let Err(parse_error) = toml::from_str::<toml::Table>(&source)
-                    && let Some(range) = parse_error.span()
-                    && let Some(span) =
-                        cargo_craftcheck::source::SourceSpan::new(range.start, range.end, &source)
-                {
-                    diagnostic = diagnostic.with_span(&source, &span);
+                // The effective policy may fail in an ancestor, not in the
+                // discovered child. Locate the actual failing source.
+                for source_path in cargo_craftcheck::scopes::sources(dir) {
+                    let Ok(source) = std::fs::read_to_string(&source_path) else {
+                        continue;
+                    };
+                    if let Err(parse_error) = toml::from_str::<toml::Table>(&source) {
+                        diagnostic.path = source_path.display().to_string();
+                        if let Some(range) = parse_error.span()
+                            && let Some(span) = cargo_craftcheck::source::SourceSpan::new(
+                                range.start,
+                                range.end,
+                                &source,
+                            )
+                        {
+                            diagnostic = diagnostic.with_span(&source, &span);
+                        }
+                        break;
+                    }
                 }
                 findings.push(diagnostic);
                 continue;
