@@ -487,7 +487,10 @@ fn relative_config_path_matches_absolute_path() {
         NEXT.fetch_add(1, Ordering::Relaxed)
     ));
     let _ = fs::remove_dir_all(&directory);
-    write(&directory.join("CraftBook.toml"), "version = 2\nproject = 'fixture'\n");
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\nproject = 'fixture'\n",
+    );
     let executable = env!("CARGO_BIN_EXE_cargo-craftcheck");
     let relative = Command::new(executable)
         .args(["check", "--config", "CraftBook.toml", "--format", "json"])
@@ -495,11 +498,21 @@ fn relative_config_path_matches_absolute_path() {
         .output()
         .unwrap();
     let absolute = Command::new(executable)
-        .args(["check", "--config", directory.join("CraftBook.toml").to_str().unwrap(), "--format", "json"])
+        .args([
+            "check",
+            "--config",
+            directory.join("CraftBook.toml").to_str().unwrap(),
+            "--format",
+            "json",
+        ])
         .current_dir(&directory)
         .output()
         .unwrap();
-    assert!(relative.status.success(), "{}", String::from_utf8_lossy(&relative.stderr));
+    assert!(
+        relative.status.success(),
+        "{}",
+        String::from_utf8_lossy(&relative.stderr)
+    );
     assert_eq!(relative.stdout, absolute.stdout);
     fs::remove_dir_all(&directory).unwrap();
 }
@@ -512,13 +525,18 @@ fn diagnostics_are_ordered_deterministically() {
         NEXT.fetch_add(1, Ordering::Relaxed)
     ));
     let _ = fs::remove_dir_all(&directory);
-    write(&directory.join("CraftBook.toml"), "version = 1\nproject = ''\nprofiles = ['unknown']\n");
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 1\nproject = ''\nprofiles = ['unknown']\n",
+    );
     let executable = env!("CARGO_BIN_EXE_cargo-craftcheck");
-    let run = || Command::new(executable)
-        .args(["check", "--format", "json"])
-        .current_dir(&directory)
-        .output()
-        .unwrap();
+    let run = || {
+        Command::new(executable)
+            .args(["check", "--format", "json"])
+            .current_dir(&directory)
+            .output()
+            .unwrap()
+    };
     let first = run();
     let second = run();
     assert!(!first.status.success());
