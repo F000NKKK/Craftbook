@@ -168,3 +168,26 @@ jobs:
             if [[ "$PRERELEASE" == true ]]; then options+=(--prerelease); else options+=(--latest); fi
             gh release create "$RELEASE_TAG" "${options[@]}"
           fi
+      - name: Marketplace publishing instructions
+        if: success()
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_url="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}"
+          {
+            echo "## Craftbook ${RELEASE_TAG} release completed"
+            echo
+            echo "- Cargo package: \`cargo-craftcheck ${RELEASE_TAG#v}\`"
+            echo "- GitHub Release: ${release_url}"
+            echo "- GitHub Action reference: \`uses: ${GITHUB_REPOSITORY}@${RELEASE_TAG}\`"
+            echo
+            echo "### Marketplace (manual GitHub requirement)"
+            echo
+            echo "GitHub does not expose a documented Marketplace publication field through the Releases API."
+            echo "Open the release, choose **Edit**, enable **Publish this Action to the GitHub Marketplace**,"
+            echo "select **Code quality** and **Continuous integration**, then save."
+            echo
+            echo "Marketplace page: https://github.com/marketplace/actions/craftbook-policy-check"
+          } >> "$GITHUB_STEP_SUMMARY"
