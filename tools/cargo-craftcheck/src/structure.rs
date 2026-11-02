@@ -57,22 +57,20 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
             ));
             continue;
         }
-        if key == "profiles" && let Some(items) = value.as_array() {
-                for (index, entry) in items.iter().enumerate() {
-                    if !entry.is_str() {
-                        let mut finding = Diagnostic::new(
-                            "CB001",
-                            format!("profiles[{index}] must be string"),
-                            path,
-                        );
-                        if let Some(span) =
-                            crate::toml_locations::policy_span(source, key, Some(index))
-                        {
-                            finding = finding.with_span(source, &span);
-                        }
-                        diagnostics.push(finding);
+        if key == "profiles"
+            && let Some(items) = value.as_array()
+        {
+            for (index, entry) in items.iter().enumerate() {
+                if !entry.is_str() {
+                    let mut finding =
+                        Diagnostic::new("CB001", format!("profiles[{index}] must be string"), path);
+                    if let Some(span) = crate::toml_locations::policy_span(source, key, Some(index))
+                    {
+                        finding = finding.with_span(source, &span);
                     }
+                    diagnostics.push(finding);
                 }
+            }
         }
         if key == "assurance" || key == "constraints" {
             let allowed: &[&str] = if key == "assurance" {
@@ -100,55 +98,55 @@ pub fn inspect(path: &Path, source: &str) -> Vec<Diagnostic> {
                 }
             }
         }
-        if key == "dependency_rule" && let Some(rules) = value.as_array() {
-                for (index, rule) in rules.iter().enumerate() {
-                    if let Some(fields) = rule.as_table() {
-                        for (field, entry) in fields {
-                            let message = if field != "from" && field != "disallow" {
-                                Some(format!("unknown dependency_rule field: {field}"))
-                            } else if !entry.is_str() {
-                                Some(format!("dependency_rule[{index}].{field} must be string"))
-                            } else {
-                                None
-                            };
-                            if let Some(message) = message {
-                                let mut finding = Diagnostic::new("CB001", message, path);
-                                if let Some(span) =
-                                    crate::toml_locations::rule_field_span(source, index, field)
-                                {
-                                    finding = finding.with_span(source, &span);
-                                }
-                                diagnostics.push(finding);
+        if key == "dependency_rule"
+            && let Some(rules) = value.as_array()
+        {
+            for (index, rule) in rules.iter().enumerate() {
+                if let Some(fields) = rule.as_table() {
+                    for (field, entry) in fields {
+                        let message = if field != "from" && field != "disallow" {
+                            Some(format!("unknown dependency_rule field: {field}"))
+                        } else if !entry.is_str() {
+                            Some(format!("dependency_rule[{index}].{field} must be string"))
+                        } else {
+                            None
+                        };
+                        if let Some(message) = message {
+                            let mut finding = Diagnostic::new("CB001", message, path);
+                            if let Some(span) =
+                                crate::toml_locations::rule_field_span(source, index, field)
+                            {
+                                finding = finding.with_span(source, &span);
                             }
+                            diagnostics.push(finding);
                         }
-                        for required in ["from", "disallow"] {
-                            if !fields.contains_key(required) {
-                                let mut finding = Diagnostic::new(
-                                    "CB001",
-                                    format!("dependency_rule[{index}] missing {required}"),
-                                    path,
-                                );
-                                if let Some(span) = crate::toml_locations::rule_span(source, index)
-                                {
-                                    finding = finding.with_span(source, &span);
-                                }
-                                diagnostics.push(finding);
-                            }
-                        }
-                    } else {
-                        let mut finding = Diagnostic::new(
-                            "CB001",
-                            format!("dependency_rule[{index}] must be table"),
-                            path,
-                        );
-                        if let Some(span) =
-                            crate::toml_locations::policy_span(source, key, Some(index))
-                        {
-                            finding = finding.with_span(source, &span);
-                        }
-                        diagnostics.push(finding);
                     }
+                    for required in ["from", "disallow"] {
+                        if !fields.contains_key(required) {
+                            let mut finding = Diagnostic::new(
+                                "CB001",
+                                format!("dependency_rule[{index}] missing {required}"),
+                                path,
+                            );
+                            if let Some(span) = crate::toml_locations::rule_span(source, index) {
+                                finding = finding.with_span(source, &span);
+                            }
+                            diagnostics.push(finding);
+                        }
+                    }
+                } else {
+                    let mut finding = Diagnostic::new(
+                        "CB001",
+                        format!("dependency_rule[{index}] must be table"),
+                        path,
+                    );
+                    if let Some(span) = crate::toml_locations::policy_span(source, key, Some(index))
+                    {
+                        finding = finding.with_span(source, &span);
+                    }
+                    diagnostics.push(finding);
                 }
+            }
         }
     }
     diagnostics
