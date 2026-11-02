@@ -133,4 +133,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Cross-platform tests
-        run: cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml 2>&1 | tee portability-tests.log
+      - name: Upload cross-platform test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: craftbook-tests-${{ matrix.os }}-${{ github.run_id }}
+          path: portability-tests.log
+          if-no-files-found: warn
+          retention-days: 30
