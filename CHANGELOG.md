@@ -1,16 +1,39 @@
 # Changelog
 
-All release history and development milestones are maintained in this file.
-
-## v2-rc4
-
-- TOML syntax, structure and semantic policy diagnostics with source ranges.
-- Source positions in JSON and SARIF reports.
-- Dependency-rule and Cargo dependency declaration source tracking.
-- Hierarchical `CraftBook.toml` configuration validation.
+Release history is maintained only in this file.
 
 ## Unreleased
 
-- Canonical CLI paths for configuration and manifests.
-- Deterministic ordering of diagnostics.
-- Regression coverage for equivalent relative and absolute configuration paths.
+- Canonical resolution of CLI configuration and manifest paths.
+- Stable ordering of diagnostics and regression tests for path equivalence and repeatability.
+
+## v2-rc4 — 2026-11-02
+
+- Parser-backed coordinates for TOML syntax, policy type, structure and semantic errors.
+- JSON and SARIF source ranges for policy declarations and Cargo workspace dependencies.
+- Improved handling of inherited policies, aliases, CRLF and Unicode.
+
+## v2-rc3 — 2026-11-01
+
+- Native Cargo policy checker with scoped dependency validation and structured diagnostics.
+- Regression coverage of nested workspaces and policy inheritance.
+
+## v2-rc2 — 2026-11-01
+
+- Tracked the originating manifest and policy rule index in dependency violations.
+- Added nested-workspace and inherited-rule validation coverage.
+
+## v2-rc1 — 2026-11-01
+
+- Native Rust policy checker with hierarchical configuration and source-aware dependency checks.
+- JSON/SARIF reporting and integration tests.
+
+## v2-rc0 — 2026-11-01
+
+- Introduced the adaptable Craftbook v2 handbook and its Rust policy checker.
+- Included migration documentation alongside the earlier Python implementation.
+
+## v1 — 2026-11-01
+
+- Legacy prescriptive Rust engineering standard and Python checker.
+- Rules covering source layout, dependencies, comments and other project conventions.
