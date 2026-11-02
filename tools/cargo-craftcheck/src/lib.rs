@@ -73,7 +73,9 @@ impl PackageSelector {
         }
         let mut remainder = &name[parts[0].len()..];
         for middle in &parts[1..parts.len() - 1] {
-            let Some(position) = remainder.find(middle) else { return false };
+            let Some(position) = remainder.find(middle) else {
+                return false;
+            };
             remainder = &remainder[position + middle.len()..];
         }
         remainder.ends_with(parts[parts.len() - 1])
