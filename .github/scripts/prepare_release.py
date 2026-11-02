@@ -17,11 +17,38 @@ FILES = (
 )
 
 
-def next_rc(version: str) -> str:
-    match = re.fullmatch(r"(\d+\.\d+\.\d+)-rc(\d+)", version)
+def next_version(version: str, bump: str, channel: str) -> str:
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta|rc)(\d+))?", version)
     if not match:
-        raise ValueError("Automatic release requires a current RC version")
-    return f"{match.group(1)}-rc{int(match.group(2)) + 1}"
+        raise ValueError(f"Invalid current version: {version}")
+    major, minor, patch = (int(match.group(i)) for i in (1, 2, 3))
+    current_channel, current_number = match.group(4), match.group(5)
+    if bump == "current":
+        if current_channel is None:
+            raise ValueError("Current bump requires a prerelease")
+        target_base = f"{major}.{minor}.{patch}"
+    elif bump == "patch":
+        target_base = f"{major}.{minor}.{patch + 1}"
+    elif bump == "minor":
+        target_base = f"{major}.{minor + 1}.0"
+    elif bump == "major":
+        target_base = f"{major + 1}.0.0"
+    else:
+        raise ValueError(f"Unknown bump: {bump}")
+    if channel == "stable":
+        if bump == "current" and current_channel is None:
+            raise ValueError("Already stable")
+        return target_base
+    if channel not in ("alpha", "beta", "rc"):
+        raise ValueError(f"Unknown channel: {channel}")
+    order = {"alpha": 0, "beta": 1, "rc": 2}
+    if bump == "current" and current_channel is not None:
+        if order[channel] < order[current_channel]:
+            raise ValueError("Cannot downgrade a prerelease channel for the same version")
+        number = int(current_number) + 1 if channel == current_channel else 1
+    else:
+        number = 1
+    return f"{target_base}-{channel}{number}"
 
 
 def prepare_changelog(contents: str, version: str, date: str) -> str:
@@ -43,7 +70,7 @@ def prepare_changelog(contents: str, version: str, date: str) -> str:
     )
 
 
-def prepare(files: dict[str, str], today: str) -> tuple[str, dict[str, str]]:
+def prepare(files: dict[str, str], today: str, bump: str = "current", channel: str = "rc") -> tuple[str, dict[str, str]]:
     import tomllib
 
     manifest = tomllib.loads(files["tools/cargo-craftcheck/Cargo.toml"])
@@ -52,7 +79,7 @@ def prepare(files: dict[str, str], today: str) -> tuple[str, dict[str, str]]:
     lock_version = next(p["version"] for p in lock["package"] if p["name"] == "cargo-craftcheck")
     if lock_version != current:
         raise ValueError("Cargo.toml and Cargo.lock do not match")
-    target = next_rc(current)
+    target = next_version(current, bump, channel)
     changed = {}
     for name in FILES:
         content = files[name]
@@ -66,10 +93,12 @@ def prepare(files: dict[str, str], today: str) -> tuple[str, dict[str, str]]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--bump", choices=("current", "patch", "minor", "major"), default="current")
+    parser.add_argument("--channel", choices=("alpha", "beta", "rc", "stable"), default="rc")
     args = parser.parse_args()
     paths = (*FILES, "CHANGELOG.md")
     original = {name: (ROOT / name).read_text(encoding="utf-8") for name in paths}
-    target, updated = prepare(original, datetime.date.today().isoformat())
+    target, updated = prepare(original, datetime.datetime.now(datetime.timezone.utc).date().isoformat(), args.bump, args.channel)
     for name, content in updated.items():
         (ROOT / name).write_text(content, encoding="utf-8")
     args.output.write_text(f"version={target}\ntag=v{target}\n", encoding="utf-8")
