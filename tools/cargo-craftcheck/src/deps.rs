@@ -18,6 +18,8 @@ struct Package {
     name: String,
     #[serde(default)]
     manifest_path: String,
+    #[serde(default)]
+    metadata: serde_json::Value,
 }
 
 #[derive(Debug, Deserialize)]
@@ -39,9 +41,50 @@ struct NodeDependency {
 
 #[derive(Debug, Deserialize)]
 pub struct DependencyRule {
+    #[serde(default)]
     pub from: String,
+    #[serde(default)]
     pub disallow: String,
+    #[serde(default)]
+    pub id: Option<String>,
+    #[serde(default)]
+    pub when: Option<String>,
+    #[serde(default)]
+    pub action: Option<String>,
+    #[serde(default)]
+    pub message: Option<String>,
 }
+
+impl DependencyRule {
+    fn matches(&self, source: &Package, target: &Package) -> Result<bool, String> {
+        if let Some(expression) = &self.when {
+            let program = cel::Program::compile(expression)
+                .map_err(|error| format!("invalid CEL expression: {error}"))?;
+            let mut context = cel::Context::default();
+            for (name, package) in [("from", source), ("to", target)] {
+                let custom = package.metadata.get("craftbook").cloned()
+                    .unwrap_or_else(|| serde_json::json!({}));
+                let value = serde_json::json!({
+                    "name": package.name,
+                    "layer": custom.get("layer").and_then(|value| value.as_str()).unwrap_or(""),
+                    "context": custom.get("context").and_then(|value| value.as_str()).unwrap_or(""),
+                    "tags": custom.get("tags").and_then(|value| value.as_array()).cloned().unwrap_or_default()
+                });
+                context.add_variable(name, cel::to_value(&value)
+                    .map_err(|error| format!("invalid package metadata: {error}"))?)
+                    .map_err(|error| format!("CEL context: {error}"))?;
+            }
+            let result = program.execute(&context)
+                .map_err(|error| format!("CEL evaluation failed: {error}"))?;
+            return match result {
+                cel::Value::Bool(value) => Ok(value),
+                _ => Err("CEL condition must return a boolean".into()),
+            };
+        }
+        Ok(self.from == source.name && self.disallow == target.name)
+    }
+}
+
 
 /// Get the Cargo workspace root for a manifest, without resolving dependencies.
 pub fn workspace_root(manifest: &Path) -> Result<String, String> {
@@ -356,6 +399,7 @@ mod tests {
         let rules = vec![DependencyRule {
             from: "a".into(),
             disallow: "b".into(),
+            id: None, when: None, action: None, message: None,
         }];
         assert_eq!(
             check_metadata(METADATA, &rules).unwrap(),
@@ -368,6 +412,7 @@ mod tests {
         let rules = vec![DependencyRule {
             from: "a".into(),
             disallow: "c".into(),
+            id: None, when: None, action: None, message: None,
         }];
         assert!(check_metadata(METADATA, &rules).unwrap().is_empty());
     }
