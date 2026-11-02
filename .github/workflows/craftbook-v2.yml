@@ -17,6 +17,8 @@ jobs:
         with:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
+      - name: Release note generator tests
+        run: python3 -m unittest discover -s .github/scripts -p 'test_*.py'
       - name: Format
         run: cargo fmt --all --check --manifest-path tools/cargo-craftcheck/Cargo.toml
       - name: Clippy
