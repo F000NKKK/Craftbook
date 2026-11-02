@@ -162,6 +162,7 @@ fn rule_source(
     directory: &Path,
     from: &str,
     disallow: &str,
+    when: Option<&str>,
 ) -> Result<(PathBuf, usize, Option<SourceCoordinates>), String> {
     for path in crate::scopes::sources(directory).into_iter().rev() {
         let content = std::fs::read_to_string(&path)
@@ -175,6 +176,7 @@ fn rule_source(
             for (index, entry) in list.iter().enumerate() {
                 if entry.get("from").and_then(toml::Value::as_str) == Some(from)
                     && entry.get("disallow").and_then(toml::Value::as_str) == Some(disallow)
+                    && entry.get("when").and_then(toml::Value::as_str) == when
                 {
                     let position = crate::toml_locations::rule_span(&content, index)
                         .and_then(|span| span.positions(&content))
@@ -237,13 +239,10 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
             let Some(target) = packages.get(edge.pkg.as_str()) else {
                 continue;
             };
-            if policy
-                .dependency_rule
-                .iter()
-                .any(|rule| rule.from == package.name && rule.disallow == target.name)
-            {
+            for rule in &policy.dependency_rule {
+                if !rule.matches(package, target)? { continue; }
                 let (config, rule_index, config_position) =
-                    rule_source(directory, &package.name, &target.name)?;
+                    rule_source(directory, &rule.from, &rule.disallow, rule.when.as_deref())?;
                 let manifest_position = dependency_position(&manifest, &target.name);
                 violations.push(DependencyViolation {
                     from: package.name.clone(),
@@ -321,11 +320,8 @@ pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
             let Some(target) = packages.get(edge.pkg.as_str()) else {
                 continue;
             };
-            if policy
-                .dependency_rule
-                .iter()
-                .any(|rule| rule.from == package.name && rule.disallow == target.name)
-            {
+            for rule in &policy.dependency_rule {
+                if !rule.matches(package, target)? { continue; }
                 findings.push(format!(
                     "{}: {} must not depend on {}",
                     dir.display(),
@@ -369,7 +365,7 @@ pub fn check_metadata(input: &str, rules: &[DependencyRule]) -> Result<Vec<Strin
                 continue;
             };
             for rule in rules {
-                if rule.from == source && rule.disallow == target {
+                if rule.when.is_none() && rule.from == source && rule.disallow == target {
                     findings.push(format!("{source} must not depend on {target}"));
                 }
             }
