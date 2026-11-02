@@ -85,6 +85,17 @@ mod tests {
     }
 
     #[test]
+    fn reports_exact_value_column_with_unicode_and_crlf() {
+        let text = "# русский комментарий\r\n[dependencies]\r\ncore = { path = '../core' }\r\n";
+        let span = dependency_span_in(text, "core").unwrap();
+        let (start, end) = span.positions(text).unwrap();
+        assert_eq!(start.line, 3);
+        assert_eq!(start.column, 8);
+        assert_eq!(end.line, 3);
+        assert!(end.column > start.column);
+    }
+
+    #[test]
     fn does_not_guess_ambiguous_dependency_position() {
         let text = "[dependencies]\ncore = '1'\n[dev-dependencies]\ncore = '1'\n";
         assert!(dependency_span_in(text, "core").is_none());
