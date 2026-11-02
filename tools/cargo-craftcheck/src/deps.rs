@@ -78,17 +78,7 @@ impl DependencyRule {
                 .map_err(|error| format!("invalid CEL expression: {error}"))?;
             let mut context = cel::Context::default();
             for (name, package) in [("from", source), ("to", target)] {
-                let custom = package
-                    .metadata
-                    .get("craftbook")
-                    .cloned()
-                    .unwrap_or_else(|| serde_json::json!({}));
-                let value = serde_json::json!({
-                    "name": package.name,
-                    "layer": custom.get("layer").and_then(|value| value.as_str()).unwrap_or(""),
-                    "context": custom.get("context").and_then(|value| value.as_str()).unwrap_or(""),
-                    "tags": custom.get("tags").and_then(|value| value.as_array()).cloned().unwrap_or_default()
-                });
+                let value = classified(package, policy);
                 context
                     .add_variable(
                         name,
