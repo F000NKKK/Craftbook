@@ -744,7 +744,9 @@ fn cli_exit_codes_and_format_contract_are_stable() {
         .output()
         .unwrap();
     assert!(!unsupported_format.status.success());
-    assert!(String::from_utf8_lossy(&unsupported_format.stderr).contains("--format is supported only"));
+    assert!(
+        String::from_utf8_lossy(&unsupported_format.stderr).contains("--format is supported only")
+    );
 
     let missing_manifest = Command::new(executable)
         .args(["deps", "--manifest-path", "missing/Cargo.toml"])
