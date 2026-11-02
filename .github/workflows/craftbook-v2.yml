@@ -35,6 +35,11 @@ jobs:
         run: cargo run --quiet -- deps
       - name: Craftbook self-check (effective configuration)
         run: cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- config
+      - name: Verify effective configuration is valid TOML
+        shell: bash
+        run: |
+          cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- config > effective-config.toml
+          python3 -c 'import tomllib; data=tomllib.load(open("effective-config.toml", "rb")); assert data["version"] == 2 and data["project"] == "Craftbook"'
       - name: Nested self-check (explain inheritance)
         working-directory: tools/cargo-craftcheck
         run: cargo run --quiet -- explain
