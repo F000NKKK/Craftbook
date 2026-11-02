@@ -237,6 +237,14 @@ mod tests {
     use super::*;
 
     #[test]
+    fn text_diagnostics_include_exact_source_position() {
+        let finding = Diagnostic::new("CB001", "invalid value", Path::new("CraftBook.toml"))
+            .at(3, 12);
+        let output = render(Format::Text, &[finding]).unwrap();
+        assert_eq!(output, "CraftBook.toml:3:12: [CB001] invalid value");
+    }
+
+    #[test]
     fn empty_json_is_success() {
         let result = render(Format::Json, &[]).unwrap();
         let value: serde_json::Value = serde_json::from_str(&result).unwrap();
