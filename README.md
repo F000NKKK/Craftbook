@@ -95,7 +95,7 @@ cargo clippy --all-targets --manifest-path tools/cargo-craftcheck/Cargo.toml -- 
 cargo test --manifest-path tools/cargo-craftcheck/Cargo.toml
 ```
 
-Configuration: [Craftbook's own policy](CraftBook.toml) · [example policy](templates/CraftBook.toml) · [workspace lints](templates/WorkspaceLints.toml) · [Clippy](templates/Clippy.toml) · [rustfmt](templates/Rustfmt.toml) · [CI template](templates/ci.yml).
+Configuration: [Craftbook's own policy](CraftBook.toml) · [example policy](templates/CraftBook.toml) · [workspace lints](templates/workspace-lints.toml) · [Clippy](templates/clippy.toml) · [rustfmt](templates/rustfmt.toml) · [CI template](templates/ci.yml).
 
 ## 🏗️ Architecture
 
@@ -139,5 +139,3 @@ Machine-readable checks: `cargo craftcheck check --format json` and `cargo craft
 ### v2-rc2 development
 
 Dependency diagnostics now retain the originating package manifest and the source `CraftBook.toml` rule (including its index). Nested workspace and inherited-rule regression tests are part of the Rust test suite. The published `v2-rc1` tag remains unchanged; these changes are on `main` pending CI verification.
-
-The template filenames use PascalCase. When installing tool configurations, copy them to the filenames expected by each tool (for example, `clippy.toml`, `rustfmt.toml`, and `deny.toml`); Cargo requires `Cargo.toml`.
