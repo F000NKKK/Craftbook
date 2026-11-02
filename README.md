@@ -77,11 +77,25 @@ Read the [principles](#-principles), select a suitable [architecture profile](ru
 Install the Craftbook policy checker:
 
 ```bash
-cargo install cargo-craftcheck --version 2.0.0-rc7
+cargo install cargo-craftcheck --version 2.0.0-rc8
 cargo craftcheck check
 ```
 
 The checker validates **policy configuration** and optional direct Cargo Workspace dependency rules; it does not inspect Rust source architecture.
+
+To run the same checks in GitHub Actions:
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: dtolnay/rust-toolchain@stable
+  - uses: F000NKKK/Craftbook@v2.0.0-rc8
+    with:
+      command: both
+      report-format: sarif
+```
+
+The action uploads check reports as a workflow artifact by default. A `CraftBook.toml` policy is required in the repository root unless `config` points elsewhere.
 
 ## 🛠️ Tooling
 
