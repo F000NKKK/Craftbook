@@ -290,7 +290,7 @@ mod tests {
         let finding = Diagnostic::new("CB001", "invalid value", Path::new("CraftBook.toml"))
             .with_span(source, &span);
         let json: serde_json::Value =
-            serde_json::from_str(&render(Format::Json, &[finding.clone()]).unwrap()).unwrap();
+            serde_json::from_str(&render(Format::Json, std::slice::from_ref(&finding)).unwrap()).unwrap();
         let sarif: serde_json::Value =
             serde_json::from_str(&render(Format::Sarif, &[finding]).unwrap()).unwrap();
         let item = &json["diagnostics"][0];
