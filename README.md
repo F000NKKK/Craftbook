@@ -74,7 +74,7 @@
 
 Read the [principles](#-principles), select a suitable [architecture profile](rust/07-architecture-ddd.md) and use [the example policy](templates/CraftBook.toml) as a starting point. No checker is required just to apply the handbook.
 
-After publishing the release candidate to crates.io, install the policy checker:
+Install the Craftbook policy checker:
 
 ```bash
 cargo install cargo-craftcheck --version 2.0.0-rc7
