@@ -243,6 +243,16 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
         if !failures.is_empty() {
             return Err(format!("{}: {}", directory.display(), failures.join("; ")));
         }
+        if policy.architecture.require_classification {
+            let metadata = package.metadata.get("craftbook");
+            let is_classified = metadata.is_some_and(|value|
+                value.get("layer").and_then(serde_json::Value::as_str).is_some_and(|layer| !layer.is_empty())
+                && value.get("context").and_then(serde_json::Value::as_str).is_some_and(|context| !context.is_empty())
+            );
+            if !is_classified {
+                return Err(format!("workspace package {} lacks [package.metadata.craftbook] layer/context classification", package.name));
+            }
+        }
         for edge in node.deps {
             let Some(target) = packages.get(edge.pkg.as_str()) else {
                 continue;
@@ -325,6 +335,16 @@ pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
         let errors = crate::validate(&policy);
         if !errors.is_empty() {
             return Err(format!("{}: {}", dir.display(), errors.join("; ")));
+        }
+        if policy.architecture.require_classification {
+            let metadata = package.metadata.get("craftbook");
+            let is_classified = metadata.is_some_and(|value|
+                value.get("layer").and_then(serde_json::Value::as_str).is_some_and(|layer| !layer.is_empty())
+                && value.get("context").and_then(serde_json::Value::as_str).is_some_and(|context| !context.is_empty())
+            );
+            if !is_classified {
+                return Err(format!("workspace package {} lacks [package.metadata.craftbook] layer/context classification", package.name));
+            }
         }
         for edge in node.deps {
             let Some(target) = packages.get(edge.pkg.as_str()) else {
