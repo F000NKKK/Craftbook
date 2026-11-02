@@ -137,9 +137,10 @@ fn check_policy_tree(root: &Path, verbose: bool) -> Result<Vec<Diagnostic>, Stri
                 let message = format!("{error}");
                 // Missing required keys have no value span, but must not be
                 // suppressed by an unrelated source-level type error.
-                if message.contains("missing field") || !findings
-                    .iter()
-                    .any(|item| item.rule_id == "CB001" && item.path == path.display().to_string())
+                if message.contains("missing field")
+                    || !findings.iter().any(|item| {
+                        item.rule_id == "CB001" && item.path == path.display().to_string()
+                    })
                 {
                     findings.push(Diagnostic::new("CB001", message, &path));
                 }
