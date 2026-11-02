@@ -166,7 +166,8 @@ fn independent_nested_workspace_is_checked_separately() {
         json["diagnostics"][0]["path"]
             .as_str()
             .unwrap()
-            .replace('\\', "/").ends_with("isolated/CraftBook.toml")
+            .replace('\\', "/")
+            .ends_with("isolated/CraftBook.toml")
     );
     fs::remove_dir_all(&directory).unwrap();
 }
@@ -205,7 +206,8 @@ fn invalid_nested_toml_produces_structured_diagnostic() {
         result["diagnostics"][0]["path"]
             .as_str()
             .unwrap()
-            .replace('\\', "/").ends_with("nested/CraftBook.toml")
+            .replace('\\', "/")
+            .ends_with("nested/CraftBook.toml")
     );
     let sarif = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
         .args(["check", "--format", "sarif"])
@@ -363,7 +365,8 @@ fn isolated_nested_workspace_dependency_violation_is_reported() {
         diagnostics[0]["config_path"]
             .as_str()
             .unwrap()
-            .replace('\\', "/").ends_with("nested/CraftBook.toml")
+            .replace('\\', "/")
+            .ends_with("nested/CraftBook.toml")
     );
     fs::remove_dir_all(&directory).unwrap();
 }
@@ -414,7 +417,8 @@ fn semantic_errors_point_to_original_policy_fields() {
             && d["path"]
                 .as_str()
                 .unwrap()
-                .replace('\\', "/").ends_with("nested/CraftBook.toml")
+                .replace('\\', "/")
+                .ends_with("nested/CraftBook.toml")
             && d["line"] == 1
             && d["column"].as_u64().is_some()
     }));
