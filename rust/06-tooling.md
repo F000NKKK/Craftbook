@@ -8,7 +8,6 @@ Run Miri for relevant unsafe code, fuzzers for untrusted input, sanitizers where
 
 `cargo deny` and advisory checks support project-specific license and supply-chain policy. Library versus application lockfile practices follow Cargo and deployment needs; `--locked` protects reproducible application builds.
 
-Craftbook v2 uses only the native Rust `cargo-craftcheck` command. The legacy Python implementation is available in historical Git tags, not in `main`. Rust syntax is validated by rustc and Clippy; direct workspace dependency edges can be checked with Cargo metadata.
 
 Example: `python3 tools/craftcheck_v2.py templates/CraftBook.toml`.
 
@@ -16,7 +15,6 @@ A hard CI gate needs a demonstrable correctness, security, compatibility or decl
 
 ## Native Cargo subcommand
 
-The experimental [`cargo-craftcheck`](../tools/cargo-craftcheck/README.md) implements v2 policy validation in Rust, independently of Python. Its automated tests are in the [v2 CI workflow](../.github/workflows/craftbook-v2.yml). The tool supports policy validation and explicit direct workspace dependency checks; source-level architecture analysis is not yet implemented.
 
 ### Dependency policies (experimental)
 
