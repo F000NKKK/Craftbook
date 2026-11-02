@@ -104,9 +104,8 @@ pub struct DependencyViolation {
 fn dependency_position(manifest: &Path, package: &str) -> Option<((usize, usize), (usize, usize))> {
     let source = std::fs::read_to_string(manifest).ok()?;
     let span = crate::toml_locations::dependency_span_in(&source, package)?;
-    span.positions(&source).map(|(start, end)| {
-        ((start.line, start.column), (end.line, end.column))
-    })
+    span.positions(&source)
+        .map(|(start, end)| ((start.line, start.column), (end.line, end.column)))
 }
 
 #[cfg(test)]

@@ -22,14 +22,26 @@ fn semantic_diagnostics(policy: &cargo_craftcheck::Policy, directory: &Path) -> 
         issues.push(("version", None, "version must be 2".to_owned()));
     }
     if policy.project.trim().is_empty() {
-        issues.push(("project", None, "project must be a nonempty string".to_owned()));
+        issues.push((
+            "project",
+            None,
+            "project must be a nonempty string".to_owned(),
+        ));
     }
     for (index, profile) in policy.profiles.iter().enumerate() {
         if !cargo_craftcheck::supported_profile(profile) {
-            issues.push(("profiles", Some(index), format!("unknown profile: {profile}")));
+            issues.push((
+                "profiles",
+                Some(index),
+                format!("unknown profile: {profile}"),
+            ));
         }
         if !profile_seen.insert(profile) {
-            issues.push(("profiles", Some(index), format!("duplicate profile: {profile}")));
+            issues.push((
+                "profiles",
+                Some(index),
+                format!("duplicate profile: {profile}"),
+            ));
         }
     }
     for (index, rule) in policy.dependency_rule.iter().enumerate() {
@@ -42,7 +54,8 @@ fn semantic_diagnostics(policy: &cargo_craftcheck::Policy, directory: &Path) -> 
         }
     }
     for (field, index, message) in issues {
-        let mut diagnostic = Diagnostic::new("CB001", message, directory.join("CraftBook.toml").as_path());
+        let mut diagnostic =
+            Diagnostic::new("CB001", message, directory.join("CraftBook.toml").as_path());
         for path in sources.iter().rev() {
             let Ok(source) = std::fs::read_to_string(path) else {
                 continue;
@@ -87,11 +100,8 @@ fn check_policy_tree(root: &Path, verbose: bool) -> Result<Vec<Diagnostic>, Stri
                 if let Ok(source) = std::fs::read_to_string(&path)
                     && let Err(parse_error) = toml::from_str::<toml::Table>(&source)
                     && let Some(range) = parse_error.span()
-                    && let Some(span) = cargo_craftcheck::source::SourceSpan::new(
-                        range.start,
-                        range.end,
-                        &source,
-                    )
+                    && let Some(span) =
+                        cargo_craftcheck::source::SourceSpan::new(range.start, range.end, &source)
                 {
                     diagnostic = diagnostic.with_span(&source, &span);
                 }
@@ -246,7 +256,8 @@ fn run() -> Result<(), String> {
                             .with_rule_column(violation.config_column)
                             .with_rule_end(violation.config_end);
                         if let Some(line) = violation.manifest_line {
-                            diagnostic = diagnostic.at(line, violation.manifest_column.unwrap_or(1));
+                            diagnostic =
+                                diagnostic.at(line, violation.manifest_column.unwrap_or(1));
                         }
                         if let Some((line, column)) = violation.manifest_end {
                             diagnostic = diagnostic.with_end(line, column);

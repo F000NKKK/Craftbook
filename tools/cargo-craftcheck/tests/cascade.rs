@@ -276,9 +276,21 @@ fn reports_multiple_workspace_edges_with_aliases_and_target_sections() {
     assert_eq!(diagnostics[0]["line"], 6);
     assert_eq!(diagnostics[1]["line"], 8);
     assert_ne!(diagnostics[0]["rule_index"], diagnostics[1]["rule_index"]);
-    assert!(diagnostics.iter().all(|entry| entry["end_line"].as_u64().is_some()));
-    assert!(diagnostics.iter().all(|entry| entry["end_column"].as_u64().is_some()));
-    assert!(diagnostics.iter().all(|entry| entry["config_end_line"].as_u64().is_some()));
+    assert!(
+        diagnostics
+            .iter()
+            .all(|entry| entry["end_line"].as_u64().is_some())
+    );
+    assert!(
+        diagnostics
+            .iter()
+            .all(|entry| entry["end_column"].as_u64().is_some())
+    );
+    assert!(
+        diagnostics
+            .iter()
+            .all(|entry| entry["config_end_line"].as_u64().is_some())
+    );
 
     let sarif = Command::new(executable)
         .args(["deps", "--format", "sarif"])
@@ -381,18 +393,41 @@ fn semantic_errors_point_to_original_policy_fields() {
     assert!(!output.status.success());
     let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     let diagnostics = report["diagnostics"].as_array().unwrap();
-    assert!(diagnostics.iter().any(|d| d["message"] == "version must be 2"
-        && d["path"].as_str().unwrap().ends_with("CraftBook.toml")
-        && d["line"] == 1 && d["column"].as_u64().is_some()
-        && d["end_column"].as_u64().is_some()));
-    assert!(diagnostics.iter().any(|d| d["message"] == "project must be a nonempty string"
-        && d["line"] == 2 && d["end_line"].as_u64().is_some()));
-    assert!(diagnostics.iter().any(|d| d["message"] == "unknown profile: unknown"
-        && d["path"].as_str().unwrap().ends_with("nested/CraftBook.toml")
-        && d["line"] == 1 && d["column"].as_u64().is_some()));
-    assert!(diagnostics.iter().any(|d| d["message"] == "duplicate profile: ddd"
-        && d["line"] == 1 && d["column"].as_u64().is_some()));
-    assert!(diagnostics.iter().any(|d| d["message"] == "dependency rules require nonempty from and disallow"
-        && d["line"] == 3 && d["end_line"].as_u64().is_some()));
+    assert!(
+        diagnostics
+            .iter()
+            .any(|d| d["message"] == "version must be 2"
+                && d["path"].as_str().unwrap().ends_with("CraftBook.toml")
+                && d["line"] == 1
+                && d["column"].as_u64().is_some()
+                && d["end_column"].as_u64().is_some())
+    );
+    assert!(
+        diagnostics
+            .iter()
+            .any(|d| d["message"] == "project must be a nonempty string"
+                && d["line"] == 2
+                && d["end_line"].as_u64().is_some())
+    );
+    assert!(diagnostics.iter().any(|d| {
+        d["message"] == "unknown profile: unknown"
+            && d["path"]
+                .as_str()
+                .unwrap()
+                .ends_with("nested/CraftBook.toml")
+            && d["line"] == 1
+            && d["column"].as_u64().is_some()
+    }));
+    assert!(
+        diagnostics
+            .iter()
+            .any(|d| d["message"] == "duplicate profile: ddd"
+                && d["line"] == 1
+                && d["column"].as_u64().is_some())
+    );
+    assert!(diagnostics.iter().any(|d| d["message"]
+        == "dependency rules require nonempty from and disallow"
+        && d["line"] == 3
+        && d["end_line"].as_u64().is_some()));
     fs::remove_dir_all(&directory).unwrap();
 }

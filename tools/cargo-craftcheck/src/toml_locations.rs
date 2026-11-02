@@ -37,7 +37,11 @@ pub fn policy_span(source: &str, field: &str, index: Option<usize>) -> Option<So
 /// Locate the first invalid (empty) dependency-rule field, if present.
 pub fn invalid_rule_field_span(source: &str, index: usize) -> Option<SourceSpan> {
     let doc = document(source)?;
-    let table = doc.as_table().get("dependency_rule")?.as_array_of_tables()?.get(index)?;
+    let table = doc
+        .as_table()
+        .get("dependency_rule")?
+        .as_array_of_tables()?
+        .get(index)?;
     for field in ["from", "disallow"] {
         let value = table.get(field)?;
         if value.as_str().is_some_and(|text| text.trim().is_empty()) {
@@ -64,7 +68,9 @@ pub fn dependency_span_in(source: &str, package: &str) -> Option<SourceSpan> {
     }
     if let Some(targets) = root.get("target").and_then(Item::as_table) {
         for (_, target) in targets.iter() {
-            let Some(target) = target.as_table() else { continue };
+            let Some(target) = target.as_table() else {
+                continue;
+            };
             for section in ["dependencies", "dev-dependencies", "build-dependencies"] {
                 if let Some(table) = target.get(section).and_then(Item::as_table) {
                     collect(source, table, package, &mut found);
@@ -87,8 +93,12 @@ fn collect(
             .and_then(toml_edit::Value::as_inline_table)
             .and_then(|entry| entry.get("package"))
             .and_then(toml_edit::Value::as_str)
-            .or_else(|| value.as_table().and_then(|entry| entry.get("package"))
-                .and_then(Item::as_str))
+            .or_else(|| {
+                value
+                    .as_table()
+                    .and_then(|entry| entry.get("package"))
+                    .and_then(Item::as_str)
+            })
             .unwrap_or(key);
         if actual == package {
             found.push(span(source, value));
@@ -99,7 +109,10 @@ fn collect(
 /// Returns the exact parsed array-of-tables entry, not a guessed header position.
 pub fn rule_span(source: &str, index: usize) -> Option<SourceSpan> {
     let doc = document(source)?;
-    let array = doc.as_table().get("dependency_rule")?.as_array_of_tables()?;
+    let array = doc
+        .as_table()
+        .get("dependency_rule")?
+        .as_array_of_tables()?;
     let table = array.get(index)?;
     let range = table.span()?;
     SourceSpan::new(range.start, range.end, source)
@@ -126,7 +139,8 @@ mod tests {
 
     #[test]
     fn finds_aliased_and_target_specific_dependencies() {
-        let text = "[target.'cfg(unix)'.dependencies]\nrenamed = { package = 'core', path = '../core' }\n";
+        let text =
+            "[target.'cfg(unix)'.dependencies]\nrenamed = { package = 'core', path = '../core' }\n";
         let result = dependency_span_in(text, "core").unwrap();
         assert!(result.bytes.start < result.bytes.end);
         assert!(text[result.bytes].contains("package = 'core'"));
