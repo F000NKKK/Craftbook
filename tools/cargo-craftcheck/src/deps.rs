@@ -55,6 +55,22 @@ pub struct DependencyRule {
     pub message: Option<String>,
 }
 
+fn classified(package: &Package, policy: &crate::Policy) -> serde_json::Value {
+    let metadata = package.metadata.get("craftbook");
+    let mut layer = metadata.and_then(|m| m.get("layer")).and_then(|v| v.as_str()).unwrap_or("").to_owned();
+    let mut context = metadata.and_then(|m| m.get("context")).and_then(|v| v.as_str()).unwrap_or("").to_owned();
+    let mut tags: Vec<String> = metadata.and_then(|m| m.get("tags")).and_then(|v| v.as_array())
+        .into_iter().flatten().filter_map(|v| v.as_str().map(str::to_owned)).collect();
+    for selector in &policy.package {
+        if selector.matches(&package.name) {
+            if layer.is_empty() { if let Some(value) = &selector.layer { layer = value.clone(); } }
+            if context.is_empty() { if let Some(value) = &selector.context { context = value.clone(); } }
+            for tag in &selector.tags { if !tags.contains(tag) { tags.push(tag.clone()); } }
+        }
+    }
+    serde_json::json!({"name": package.name, "layer": layer, "context": context, "tags": tags})
+}
+
 impl DependencyRule {
     fn matches(&self, source: &Package, target: &Package, policy: &crate::Policy) -> Result<bool, String> {
         if let Some(expression) = &self.when {
