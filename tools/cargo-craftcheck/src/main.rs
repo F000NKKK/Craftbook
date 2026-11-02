@@ -54,7 +54,14 @@ fn semantic_diagnostics(policy: &cargo_craftcheck::Policy, directory: &Path) -> 
                 continue;
             }
             diagnostic.path = path.display().to_string();
-            if let Some(span) = cargo_craftcheck::toml_locations::policy_span(&source, field, index) {
+            let location = if field == "dependency_rule" {
+                index.and_then(|index| {
+                    cargo_craftcheck::toml_locations::invalid_rule_field_span(&source, index)
+                })
+            } else {
+                cargo_craftcheck::toml_locations::policy_span(&source, field, index)
+            };
+            if let Some(span) = location {
                 diagnostic = diagnostic.with_span(&source, &span);
             }
             break;
