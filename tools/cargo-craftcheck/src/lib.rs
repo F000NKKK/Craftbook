@@ -99,7 +99,7 @@ pub fn validate(policy: &Policy) -> Vec<String> {
         }
     }
     for rule in &policy.dependency_rule {
-        if rule.from.trim().is_empty() || rule.disallow.trim().is_empty() {
+        if rule.when.is_none() && (rule.from.trim().is_empty() || rule.disallow.trim().is_empty()) {
             errors.push("dependency rules require nonempty from and disallow".to_owned());
         }
     }
