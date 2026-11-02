@@ -77,7 +77,7 @@ Read the [principles](#-principles), select a suitable [architecture profile](ru
 Install the Craftbook policy checker:
 
 ```bash
-cargo install cargo-craftcheck --version 2.0.0-rc8
+cargo install cargo-craftcheck --version 2.0.0-rc9
 cargo craftcheck check
 ```
 
@@ -89,7 +89,7 @@ To run the same checks in GitHub Actions:
 steps:
   - uses: actions/checkout@v4
   - uses: dtolnay/rust-toolchain@stable
-  - uses: F000NKKK/Craftbook@v2.0.0-rc8
+  - uses: F000NKKK/Craftbook@v2.0.0-rc9
     with:
       command: both
       report-format: sarif

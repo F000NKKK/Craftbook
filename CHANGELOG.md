@@ -4,6 +4,8 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
+## v2.0.0-rc9 — 2026-11-02
+
 - Added tag-driven GitHub Release and crates.io publishing workflow with version consistency checks, changelog-derived release notes, commit summaries, and repeat-publication safeguards.
 - Added regression tests for release notes generation.
 
