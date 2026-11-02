@@ -255,17 +255,17 @@ pub fn inspect_workspace_scoped(path: &Path) -> Result<Vec<DependencyViolation>,
             return Err(format!("{}: {}", directory.display(), failures.join("; ")));
         }
         if policy.architecture.require_classification {
-            let metadata = package.metadata.get("craftbook");
-            let is_classified = metadata.is_some_and(|value| {
-                value
+            let metadata = classified(package, &policy);
+            let is_classified = {
+                metadata
                     .get("layer")
                     .and_then(serde_json::Value::as_str)
                     .is_some_and(|layer| !layer.is_empty())
-                    && value
+                    && metadata
                         .get("context")
                         .and_then(serde_json::Value::as_str)
                         .is_some_and(|context| !context.is_empty())
-            });
+            };
             if !is_classified {
                 return Err(format!(
                     "workspace package {} lacks [package.metadata.craftbook] layer/context classification",
@@ -357,17 +357,17 @@ pub fn check_workspace_scoped(path: &Path) -> Result<Vec<String>, String> {
             return Err(format!("{}: {}", dir.display(), errors.join("; ")));
         }
         if policy.architecture.require_classification {
-            let metadata = package.metadata.get("craftbook");
-            let is_classified = metadata.is_some_and(|value| {
-                value
+            let metadata = classified(package, &policy);
+            let is_classified = {
+                metadata
                     .get("layer")
                     .and_then(serde_json::Value::as_str)
                     .is_some_and(|layer| !layer.is_empty())
-                    && value
+                    && metadata
                         .get("context")
                         .and_then(serde_json::Value::as_str)
                         .is_some_and(|context| !context.is_empty())
-            });
+            };
             if !is_classified {
                 return Err(format!(
                     "workspace package {} lacks [package.metadata.craftbook] layer/context classification",
