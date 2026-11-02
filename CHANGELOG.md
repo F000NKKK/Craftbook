@@ -4,6 +4,10 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
+- Audited CLI subcommands, option errors and exit codes with integration regression coverage.
+- Added a structured-diagnostic regression for malformed Cargo manifests (CB003) without a process panic.
+- Documented current CLI, JSON schema v1, SARIF 2.1.0, coordinates and output guarantees.
+
 - Added regression checks for the stable JSON/SARIF diagnostic schema and source provenance.
 - Extended repository CI assertions for successful JSON/SARIF reports.
 
