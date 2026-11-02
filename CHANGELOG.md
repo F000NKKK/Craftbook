@@ -4,6 +4,9 @@ Release history is maintained only in this file.
 
 ## Unreleased
 
+- Locked the JSON/SARIF diagnostic contracts with regression tests for schema fields, omitted unknown coordinates, and dependency-rule source provenance.
+- CI self-check validates report schema identifiers and verifies that successful repository scans contain no findings.
+
 - CI template includes an optional `cargo-craftcheck` policy/dependency job with downloadable JSON and SARIF reports.
 - Policy template documents nested overrides and opt-in dependency rules; repository CI validates shipped templates.
 
