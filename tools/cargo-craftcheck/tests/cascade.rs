@@ -478,3 +478,52 @@ fn invalid_policy_structure_has_exact_json_and_sarif_ranges() {
     }
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn relative_config_path_matches_absolute_path() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-relative-paths-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    write(&directory.join("CraftBook.toml"), "version = 2\nproject = 'fixture'\n");
+    let executable = env!("CARGO_BIN_EXE_cargo-craftcheck");
+    let relative = Command::new(executable)
+        .args(["check", "--config", "CraftBook.toml", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    let absolute = Command::new(executable)
+        .args(["check", "--config", directory.join("CraftBook.toml").to_str().unwrap(), "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(relative.status.success(), "{}", String::from_utf8_lossy(&relative.stderr));
+    assert_eq!(relative.stdout, absolute.stdout);
+    fs::remove_dir_all(&directory).unwrap();
+}
+
+#[test]
+fn diagnostics_are_ordered_deterministically() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-ordering-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    write(&directory.join("CraftBook.toml"), "version = 1\nproject = ''\nprofiles = ['unknown']\n");
+    let executable = env!("CARGO_BIN_EXE_cargo-craftcheck");
+    let run = || Command::new(executable)
+        .args(["check", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    let first = run();
+    let second = run();
+    assert!(!first.status.success());
+    assert_eq!(first.stdout, second.stdout);
+    let report: serde_json::Value = serde_json::from_slice(&first.stdout).unwrap();
+    assert_eq!(report["diagnostics"].as_array().unwrap().len(), 3);
+    fs::remove_dir_all(&directory).unwrap();
+}
