@@ -259,7 +259,9 @@ fn run() -> Result<(), String> {
             }
             println!("Nested tables merge; scalars and arrays replace inherited values.");
         }
-        println!("{merged}");
+        let serialized = toml::to_string_pretty(&merged)
+            .map_err(|error| format!("cannot serialize effective policy: {error}"))?;
+        print!("{serialized}");
         return Ok(());
     }
     let mut diagnostics = check_policy_tree(root, format == Format::Text)?;
