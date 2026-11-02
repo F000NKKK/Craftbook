@@ -6,11 +6,15 @@
 
 ### A practical engineering handbook for idiomatic Rust — from libraries to operating systems
 
+[![cargo-craftcheck](https://img.shields.io/crates/v/cargo-craftcheck.svg?label=cargo-craftcheck&cacheSeconds=86400)](https://crates.io/crates/cargo-craftcheck)
+[![docs.rs](https://img.shields.io/docsrs/cargo-craftcheck?cacheSeconds=86400)](https://docs.rs/cargo-craftcheck)
+[![Downloads](https://img.shields.io/crates/d/cargo-craftcheck.svg?cacheSeconds=86400)](https://crates.io/crates/cargo-craftcheck)
+[![CI](https://github.com/F000NKKK/Craftbook/actions/workflows/craftbook-v2.yml/badge.svg)](https://github.com/F000NKKK/Craftbook/actions/workflows/craftbook-v2.yml)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](tools/cargo-craftcheck/Cargo.toml)
 ![Rust](https://img.shields.io/badge/language-Rust-CE422B)
 ![Edition 2024](https://img.shields.io/badge/edition-2024-informational)
 ![Handbook v2](https://img.shields.io/badge/handbook-v2-blue)
-[![CI](https://github.com/F000NKKK/Craftbook/actions/workflows/craftbook-v2.yml/badge.svg)](https://github.com/F000NKKK/Craftbook/actions/workflows/craftbook-v2.yml)
-![cargo-craftcheck](https://img.shields.io/badge/cargo--craftcheck-experimental-yellow)
+![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-informational)
 
 🇺🇸 **English** | 🇷🇺 [Русский](README.ru.md)
 
@@ -70,13 +74,11 @@
 
 Read the [principles](#-principles), select a suitable [architecture profile](rust/07-architecture-ddd.md) and use [the example policy](templates/CraftBook.toml) as a starting point. No checker is required just to apply the handbook.
 
-For the experimental native Rust policy checker:
+Install the published release-candidate policy checker:
 
 ```bash
-git clone https://github.com/F000NKKK/Craftbook.git
-cd Craftbook
-cargo install --path tools/cargo-craftcheck
-cargo craftcheck check --config templates/CraftBook.toml
+cargo install cargo-craftcheck --version 2.0.0-rc6
+cargo craftcheck check
 ```
 
 The checker validates **policy configuration** and optional direct Cargo Workspace dependency rules; it does not inspect Rust source architecture.
@@ -87,7 +89,7 @@ The checker validates **policy configuration** and optional direct Cargo Workspa
 |---|---|---|
 | `cargo fmt` | Format Rust sources | Standard tooling |
 | `cargo clippy` | Compiler-aware diagnostics | Standard tooling |
-| [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) | Validate v2 policy and opt-in workspace edges | Experimental |
+| [`cargo-craftcheck`](tools/cargo-craftcheck/README.md) | Validate v2 policy and opt-in workspace edges | Release candidate |
 
 ```bash
 cargo fmt --all --check --manifest-path tools/cargo-craftcheck/Cargo.toml
