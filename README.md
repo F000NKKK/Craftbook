@@ -77,7 +77,7 @@ Read the [principles](#-principles), select a suitable [architecture profile](ru
 Install the published release-candidate policy checker:
 
 ```bash
-cargo install cargo-craftcheck --version 2.0.0-rc6
+cargo install cargo-craftcheck --version 2.0.0-rc7
 cargo craftcheck check
 ```
 
