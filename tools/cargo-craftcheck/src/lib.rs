@@ -68,6 +68,11 @@ pub struct Constraints {
     pub unsafe_review_required: bool,
 }
 
+/// Whether a named architecture profile is supported.
+pub fn supported_profile(profile: &str) -> bool {
+    PROFILES.contains(&profile)
+}
+
 /// Parse configuration, reporting TOML syntax and shape errors.
 pub fn parse(input: &str) -> Result<Policy, String> {
     toml::from_str(input).map_err(|error| format!("invalid policy TOML: {error}"))
@@ -85,7 +90,7 @@ pub fn validate(policy: &Policy) -> Vec<String> {
 
     let mut seen = HashSet::new();
     for profile in &policy.profiles {
-        if !PROFILES.contains(&profile.as_str()) {
+        if !supported_profile(profile) {
             errors.push(format!("unknown profile: {profile}"));
         }
         if !seen.insert(profile) {
