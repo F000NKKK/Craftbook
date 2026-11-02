@@ -355,3 +355,44 @@ fn isolated_nested_workspace_dependency_violation_is_reported() {
     );
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn semantic_errors_point_to_original_policy_fields() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-semantic-ranges-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    fs::create_dir_all(&directory).unwrap();
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 1\nproject = '  '\nprofiles = ['simple']\n",
+    );
+    write(
+        &directory.join("nested/CraftBook.toml"),
+        "profiles = ['unknown', 'ddd', 'ddd']\n[[dependency_rule]]\nfrom = ''\ndisallow = 'api'\n",
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_cargo-craftcheck"))
+        .args(["check", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let report: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let diagnostics = report["diagnostics"].as_array().unwrap();
+    assert!(diagnostics.iter().any(|d| d["message"] == "version must be 2"
+        && d["path"].as_str().unwrap().ends_with("CraftBook.toml")
+        && d["line"] == 1 && d["column"].as_u64().is_some()
+        && d["end_column"].as_u64().is_some()));
+    assert!(diagnostics.iter().any(|d| d["message"] == "project must be a nonempty string"
+        && d["line"] == 2 && d["end_line"].as_u64().is_some()));
+    assert!(diagnostics.iter().any(|d| d["message"] == "unknown profile: unknown"
+        && d["path"].as_str().unwrap().ends_with("nested/CraftBook.toml")
+        && d["line"] == 1 && d["column"].as_u64().is_some()));
+    assert!(diagnostics.iter().any(|d| d["message"] == "duplicate profile: ddd"
+        && d["line"] == 1 && d["column"].as_u64().is_some()));
+    assert!(diagnostics.iter().any(|d| d["message"] == "dependency rules require nonempty from and disallow"
+        && d["line"] == 2 && d["end_line"].as_u64().is_some()));
+    fs::remove_dir_all(&directory).unwrap();
+}
