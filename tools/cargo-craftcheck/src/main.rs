@@ -237,8 +237,10 @@ fn run() -> Result<(), String> {
 
     if command == "deps" {
         let manifests = match manifest {
-            Some(path) => vec![std::fs::canonicalize(&path)
-                .map_err(|error| format!("{}: {error}", path.display()))?],
+            Some(path) => vec![
+                std::fs::canonicalize(&path)
+                    .map_err(|error| format!("{}: {error}", path.display()))?,
+            ],
             None => cargo_craftcheck::scopes::discover(root, "Cargo.toml")?,
         };
         if manifests.is_empty() {
@@ -286,15 +288,19 @@ fn run() -> Result<(), String> {
         }
     }
     diagnostics.sort_by(|a, b| {
-        a.path.cmp(&b.path)
+        a.path
+            .cmp(&b.path)
             .then(a.line.cmp(&b.line))
             .then(a.column.cmp(&b.column))
             .then(a.rule_id.cmp(&b.rule_id))
             .then(a.message.cmp(&b.message))
     });
     diagnostics.dedup_by(|a, b| {
-        a.path == b.path && a.line == b.line && a.column == b.column
-            && a.rule_id == b.rule_id && a.message == b.message
+        a.path == b.path
+            && a.line == b.line
+            && a.column == b.column
+            && a.rule_id == b.rule_id
+            && a.message == b.message
     });
     let root_absolute = root.to_path_buf();
     let output = render_with_root(format, &diagnostics, &root_absolute)?;
