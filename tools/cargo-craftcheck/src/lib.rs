@@ -11,6 +11,7 @@ pub mod deps;
 pub mod report;
 pub mod scopes;
 pub mod source;
+pub mod structure;
 pub mod toml_locations;
 
 const PROFILES: &[&str] = &[
