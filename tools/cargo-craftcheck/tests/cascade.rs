@@ -696,3 +696,63 @@ fn effective_config_is_valid_toml() {
     assert_eq!(value["assurance"]["test"].as_bool(), Some(true));
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn cli_exit_codes_and_format_contract_are_stable() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-cli-contract-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\nproject = 'fixture'\nprofiles = ['simple']\n",
+    );
+    let executable = env!("CARGO_BIN_EXE_cargo-craftcheck");
+    for command in ["check", "config", "explain"] {
+        let output = Command::new(executable)
+            .arg(command)
+            .current_dir(&directory)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{command}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    let config = Command::new(executable)
+        .arg("config")
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    let value: toml::Value = toml::from_str(&String::from_utf8(config.stdout).unwrap()).unwrap();
+    assert_eq!(value["project"].as_str(), Some("fixture"));
+
+    let invalid_format = Command::new(executable)
+        .args(["check", "--format", "xml"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!invalid_format.status.success());
+    assert!(String::from_utf8_lossy(&invalid_format.stderr).contains("unsupported output format"));
+
+    let unsupported_format = Command::new(executable)
+        .args(["config", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!unsupported_format.status.success());
+    assert!(String::from_utf8_lossy(&unsupported_format.stderr).contains("--format is supported only"));
+
+    let missing_manifest = Command::new(executable)
+        .args(["deps", "--manifest-path", "missing/Cargo.toml"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(!missing_manifest.status.success());
+    assert!(String::from_utf8_lossy(&missing_manifest.stderr).contains("missing"));
+
+    fs::remove_dir_all(&directory).unwrap();
+}
