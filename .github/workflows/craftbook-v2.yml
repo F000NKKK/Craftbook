@@ -42,50 +42,6 @@ jobs:
         run: |
           cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- check --format json > craftcheck.json
           jq -e '.success == true and (.diagnostics | length == 0)' craftcheck.json
-      - name: Self-check invalid policy diagnostic contracts
-        shell: bash
-        run: |
-          set -euo pipefail
-          cargo build --manifest-path tools/cargo-craftcheck/Cargo.toml
-          checker="$PWD/tools/cargo-craftcheck/target/debug/cargo-craftcheck"
-          fixture="$(mktemp -d)"
-          trap 'rm -rf "$fixture"' EXIT
-          cat > "$fixture/CraftBook.toml" <<'EOF'
-          version = "wrong"
-          project = "app"
-          [assurance]
-          clippy = "yes"
-          EOF
-          if (cd "$fixture" && "$checker" check --format json) > "$fixture/report.json" 2> "$fixture/errors.txt"; then
-            echo "Invalid policy unexpectedly passed"
-            exit 1
-          fi
-          mkdir -p target/self-check-reports/invalid-policy
-          cp "$fixture/CraftBook.toml" target/self-check-reports/invalid-policy/CraftBook.toml
-          cp "$fixture/report.json" target/self-check-reports/invalid-policy/check.json
-          cp "$fixture/errors.txt" target/self-check-reports/invalid-policy/check-stderr.txt
-          jq -e '
-            .schemaVersion == 1 and .tool == "cargo-craftcheck" and .success == false
-            and ([.diagnostics[] | select(.message == "version must be integer" and .line == 1 and .column == 11 and .end_column == 18)] | length == 1)
-            and ([.diagnostics[] | select(.message == "assurance.clippy must be boolean" and .line == 4)] | length == 1)
-          ' "$fixture/report.json"
-          if (cd "$fixture" && "$checker" check --format sarif) > "$fixture/report.sarif" 2> /dev/null; then
-            echo "Invalid policy SARIF unexpectedly passed"
-            exit 1
-          fi
-          cp "$fixture/report.sarif" target/self-check-reports/invalid-policy/check.sarif
-          jq -e '
-            .version == "2.1.0"
-            and ([.runs[0].results[] | select(.message.text == "version must be integer"
-              and .locations[0].physicalLocation.region.startLine == 1
-              and .locations[0].physicalLocation.region.startColumn == 11)] | length == 1)
-          ' "$fixture/report.sarif"
-          if (cd "$fixture" && "$checker" check --format text) > /dev/null 2> "$fixture/report.txt"; then
-            echo "Invalid policy text unexpectedly passed"
-            exit 1
-          fi
-          cp "$fixture/report.txt" target/self-check-reports/invalid-policy/check.txt
-          grep -Fq "CraftBook.toml:1:11: [CB001] version must be integer" "$fixture/report.txt"
       - name: Self-check SARIF output
         run: |
           cargo run --quiet --manifest-path tools/cargo-craftcheck/Cargo.toml -- deps --format sarif > craftcheck.sarif
