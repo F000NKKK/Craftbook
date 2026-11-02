@@ -60,10 +60,10 @@ jobs:
             echo "Invalid policy unexpectedly passed"
             exit 1
           fi
-          mkdir -p self-check-reports/invalid-policy
-          cp "$fixture/CraftBook.toml" self-check-reports/invalid-policy/CraftBook.toml
-          cp "$fixture/report.json" self-check-reports/invalid-policy/check.json
-          cp "$fixture/errors.txt" self-check-reports/invalid-policy/check-stderr.txt
+          mkdir -p target/self-check-reports/invalid-policy
+          cp "$fixture/CraftBook.toml" target/self-check-reports/invalid-policy/CraftBook.toml
+          cp "$fixture/report.json" target/self-check-reports/invalid-policy/check.json
+          cp "$fixture/errors.txt" target/self-check-reports/invalid-policy/check-stderr.txt
           jq -e '
             .schemaVersion == 1 and .tool == "cargo-craftcheck" and .success == false
             and ([.diagnostics[] | select(.message == "version must be integer" and .line == 1 and .column == 11 and .end_column == 18)] | length == 1)
@@ -73,7 +73,7 @@ jobs:
             echo "Invalid policy SARIF unexpectedly passed"
             exit 1
           fi
-          cp "$fixture/report.sarif" self-check-reports/invalid-policy/check.sarif
+          cp "$fixture/report.sarif" target/self-check-reports/invalid-policy/check.sarif
           jq -e '
             .version == "2.1.0"
             and ([.runs[0].results[] | select(.message.text == "version must be integer"
@@ -84,7 +84,7 @@ jobs:
             echo "Invalid policy text unexpectedly passed"
             exit 1
           fi
-          cp "$fixture/report.txt" self-check-reports/invalid-policy/check.txt
+          cp "$fixture/report.txt" target/self-check-reports/invalid-policy/check.txt
           grep -Fq "CraftBook.toml:1:11: [CB001] version must be integer" "$fixture/report.txt"
       - name: Self-check SARIF output
         run: |
@@ -95,30 +95,30 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          mkdir -p self-check-reports/project
-          cp craftcheck.json self-check-reports/project/check.json 2>/dev/null || true
-          cp craftcheck.sarif self-check-reports/project/deps.sarif 2>/dev/null || true
+          mkdir -p target/self-check-reports/project
+          cp craftcheck.json target/self-check-reports/project/check.json 2>/dev/null || true
+          cp craftcheck.sarif target/self-check-reports/project/deps.sarif 2>/dev/null || true
           if [ -x tools/cargo-craftcheck/target/debug/cargo-craftcheck ]; then
             checker="$PWD/tools/cargo-craftcheck/target/debug/cargo-craftcheck"
-            "$checker" check --format text > self-check-reports/project/check.txt 2>&1
-            printf 'check text exit: %s\n' "$?" > self-check-reports/exit-codes.txt
-            "$checker" deps --format json > self-check-reports/project/deps.json 2> self-check-reports/project/deps-errors.txt
-            printf 'deps json exit: %s\n' "$?" >> self-check-reports/exit-codes.txt
-            "$checker" config > self-check-reports/project/effective-config.toml 2> self-check-reports/project/config-errors.txt
-            printf 'config exit: %s\n' "$?" >> self-check-reports/exit-codes.txt
-            (cd tools/cargo-craftcheck && "$checker" explain) > self-check-reports/project/nested-explain.txt 2>&1
-            printf 'nested explain exit: %s\n' "$?" >> self-check-reports/exit-codes.txt
+            "$checker" check --format text > target/self-check-reports/project/check.txt 2>&1
+            printf 'check text exit: %s\n' "$?" > target/self-check-reports/exit-codes.txt
+            "$checker" deps --format json > target/self-check-reports/project/deps.json 2> target/self-check-reports/project/deps-errors.txt
+            printf 'deps json exit: %s\n' "$?" >> target/self-check-reports/exit-codes.txt
+            "$checker" config > target/self-check-reports/project/effective-config.toml 2> target/self-check-reports/project/config-errors.txt
+            printf 'config exit: %s\n' "$?" >> target/self-check-reports/exit-codes.txt
+            (cd tools/cargo-craftcheck && "$checker" explain) > target/self-check-reports/project/nested-explain.txt 2>&1
+            printf 'nested explain exit: %s\n' "$?" >> target/self-check-reports/exit-codes.txt
           else
-            echo "Checker binary not available; inspect previous build steps." > self-check-reports/exit-codes.txt
+            echo "Checker binary not available; inspect previous build steps." > target/self-check-reports/exit-codes.txt
           fi
           printf '# Craftbook self-check report\n\nWorkflow: %s\nCommit: %s\nRun: %s\n\nOutputs are collected from actual analyzer executions. See exit-codes.txt and individual reports.\n' \
-            "$GITHUB_WORKFLOW" "$GITHUB_SHA" "$GITHUB_RUN_ID" > self-check-reports/README.md
+            "$GITHUB_WORKFLOW" "$GITHUB_SHA" "$GITHUB_RUN_ID" > target/self-check-reports/README.md
       - name: Upload self-check analysis artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: craftbook-self-check-${{ github.run_id }}
-          path: self-check-reports/
+          path: target/self-check-reports/
           if-no-files-found: warn
           retention-days: 30
 
