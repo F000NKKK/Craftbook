@@ -113,6 +113,19 @@ fn check_policy_tree(root: &Path, verbose: bool) -> Result<Vec<Diagnostic>, Stri
         if let Ok(source) = std::fs::read_to_string(&path) {
             findings.extend(cargo_craftcheck::structure::inspect(&path, &source));
         }
+        for required in ["version", "project"] {
+            if merged.get(required).is_none() {
+                let owner = cargo_craftcheck::scopes::sources(dir)
+                    .into_iter()
+                    .next()
+                    .unwrap_or_else(|| path.clone());
+                findings.push(Diagnostic::new(
+                    "CB001",
+                    format!("missing field `{required}`"),
+                    &owner,
+                ));
+            }
+        }
         match merged.try_into() {
             Ok(policy) => {
                 let policy: cargo_craftcheck::Policy = policy;
