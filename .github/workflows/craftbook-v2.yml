@@ -95,6 +95,7 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          set +e
           mkdir -p target/self-check-reports/project
           cp craftcheck.json target/self-check-reports/project/check.json 2>/dev/null || true
           cp craftcheck.sarif target/self-check-reports/project/deps.sarif 2>/dev/null || true
