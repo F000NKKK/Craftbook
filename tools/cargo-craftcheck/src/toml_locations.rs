@@ -86,14 +86,12 @@ pub fn invalid_rule_field_span(source: &str, index: usize) -> Option<SourceSpan>
     let doc = document(source)?;
     let item = doc.as_table().get("dependency_rule")?;
     for field in ["from", "disallow"] {
-        let value = if let Some(table) = item.as_array_of_tables().and_then(|array| array.get(index)) {
-            table.get(field).and_then(Item::as_value)
-        } else {
-            item.as_array()?
-                .get(index)?
-                .as_inline_table()?
-                .get(field)
-        };
+        let value =
+            if let Some(table) = item.as_array_of_tables().and_then(|array| array.get(index)) {
+                table.get(field).and_then(Item::as_value)
+            } else {
+                item.as_array()?.get(index)?.as_inline_table()?.get(field)
+            };
         if let Some(value) = value
             && value.as_str().is_some_and(|text| text.trim().is_empty())
         {
