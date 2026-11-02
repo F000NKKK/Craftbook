@@ -4,6 +4,9 @@ version = "2.0.0-rc9"
 edition = "2024"
 description = "Portable Craftbook v2 policy validator for Cargo workspaces"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/F000NKKK/Craftbook"
+homepage = "https://github.com/F000NKKK/Craftbook"
+documentation = "https://docs.rs/cargo-craftcheck"
 publish = true
 
 [dependencies]
