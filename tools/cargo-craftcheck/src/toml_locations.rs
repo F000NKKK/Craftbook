@@ -61,7 +61,11 @@ pub fn policy_path_span(source: &str, path: &[&str], index: Option<usize>) -> Op
 /// Locate a field in one table of dependency-rule declarations.
 pub fn rule_field_span(source: &str, index: usize, field: &str) -> Option<SourceSpan> {
     let doc = document(source)?;
-    let table = doc.as_table().get("dependency_rule")?.as_array_of_tables()?.get(index)?;
+    let table = doc
+        .as_table()
+        .get("dependency_rule")?
+        .as_array_of_tables()?
+        .get(index)?;
     span(source, table.get(field)?)
 }
 
