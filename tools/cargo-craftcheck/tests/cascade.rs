@@ -580,3 +580,46 @@ fn missing_required_field_is_not_hidden_by_unrelated_type_error() {
     }));
     fs::remove_dir_all(&directory).unwrap();
 }
+
+#[test]
+fn relative_manifest_path_matches_absolute_path() {
+    let directory = std::env::temp_dir().join(format!(
+        "craftbook-manifest-path-{}-{}",
+        std::process::id(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
+    ));
+    let _ = fs::remove_dir_all(&directory);
+    write(
+        &directory.join("CraftBook.toml"),
+        "version = 2\nproject = 'fixture'\n",
+    );
+    write(
+        &directory.join("Cargo.toml"),
+        "[package]\nname = 'fixture'\nversion = '0.1.0'\nedition = '2024'\n",
+    );
+    write(&directory.join("src/lib.rs"), "pub fn fixture() {}\n");
+    let executable = env!("CARGO_BIN_EXE_cargo-craftcheck");
+    let relative = Command::new(executable)
+        .args(["deps", "--manifest-path", "Cargo.toml", "--format", "json"])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    let absolute = Command::new(executable)
+        .args([
+            "deps",
+            "--manifest-path",
+            directory.join("Cargo.toml").to_str().unwrap(),
+            "--format",
+            "json",
+        ])
+        .current_dir(&directory)
+        .output()
+        .unwrap();
+    assert!(
+        relative.status.success(),
+        "{}",
+        String::from_utf8_lossy(&relative.stderr)
+    );
+    assert_eq!(relative.stdout, absolute.stdout);
+    fs::remove_dir_all(&directory).unwrap();
+}
