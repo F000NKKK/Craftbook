@@ -120,6 +120,8 @@ mod tests {
         assert_eq!(&source[second.bytes], "'unknown'");
         let rule = policy_span(source, "dependency_rule", Some(0)).unwrap();
         assert!(source[rule.bytes].contains("from = ''"));
+        let invalid = invalid_rule_field_span(source, 0).unwrap();
+        assert_eq!(&source[invalid.bytes], "''");
     }
 
     #[test]
